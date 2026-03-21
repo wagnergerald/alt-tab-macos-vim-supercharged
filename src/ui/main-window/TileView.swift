@@ -11,6 +11,7 @@ class TileView: FlippedView {
     var label = TileTitleView(font: Appearance.font)
     var statusIcons = StatusIconsView()
     var dockLabelIcon = TileFontIconView(badgeSize: TileFontIconView.badgeBaseSize(forIconSize: TileView.iconSize().width))
+    var windowHintBadge = TileFontIconView(badgeSize: max(14, TileFontIconView.badgeBaseSize(forIconSize: TileView.iconSize().width)))
     var windowlessAppIndicator = WindowlessAppIndicator(tooltip: TileView.noOpenWindowToolTip)
     private var fullTitle = ""
     private var fullTitleWidth = CGFloat(0)
@@ -99,22 +100,27 @@ class TileView: FlippedView {
         dockLabelIcon.shadow = shadow
         layer!.addSublayer(appIcon)
         addSubview(dockLabelIcon)
+        windowHintBadge.isHidden = true
+        addSubview(windowHintBadge)
         label.fixHeight()
     }
 
     private func setupStyleSpecificSubviews() {
         if Preferences.appearanceStyle == .appIcons {
             addSubviews([label])
+            setSubviewAbove(windowHintBadge)
             setSubviewAbove(windowlessAppIndicator)
             label.alignment = .center
             label.isHidden = true
         } else if Preferences.appearanceStyle == .thumbnails {
             layer!.addSublayer(thumbnail)
             addSubviews([label, statusIcons])
+            setSubviewAbove(windowHintBadge)
             setSubviewAbove(windowlessAppIndicator)
         } else {
-            setSubviewAbove(windowlessAppIndicator)
             addSubviews([label, statusIcons])
+            setSubviewAbove(windowHintBadge)
+            setSubviewAbove(windowlessAppIndicator)
         }
     }
 
@@ -442,6 +448,41 @@ class TileView: FlippedView {
         }
         updateWindowlessAppIndicatorPosition()
         updateDockLabelIconPosition()
+        updateWindowHintBadgePosition()
+    }
+
+    func updateWindowHintBadge(_ text: String?) {
+        guard let text, !text.isEmpty else {
+            assignIfDifferent(&windowHintBadge.isHidden, true)
+            return
+        }
+        windowHintBadge.isHidden = false
+        windowHintBadge.setText(text)
+        windowHintBadge.setAccessibilityLabel("Window hint \(text)")
+        let sz = windowHintBadge.fittingSize
+        if sz.width > 0, sz.height > 0 {
+            windowHintBadge.setFrameSize(NSSize(width: ceil(sz.width), height: ceil(sz.height)))
+        }
+        updateWindowHintBadgePosition()
+    }
+
+    private func updateWindowHintBadgePosition() {
+        guard !windowHintBadge.isHidden else { return }
+        let edgeInsets = Appearance.edgeInsetsSize
+        let pad = max(2, edgeInsets * 0.35)
+        if Preferences.appearanceStyle == .thumbnails {
+            let x = thumbnail.frame.minX + pad
+            let y = thumbnail.frame.maxY - windowHintBadge.frame.height - pad
+            assignIfDifferent(&windowHintBadge.frame.origin, CGPoint(x: x, y: y))
+        } else if Preferences.appearanceStyle == .appIcons {
+            let x = appIcon.frame.minX + pad
+            let y = appIcon.frame.maxY - windowHintBadge.frame.height - pad
+            assignIfDifferent(&windowHintBadge.frame.origin, CGPoint(x: x, y: y))
+        } else {
+            let x = edgeInsets + pad
+            let y = frame.height - windowHintBadge.frame.height - edgeInsets - pad
+            assignIfDifferent(&windowHintBadge.frame.origin, CGPoint(x: x, y: y))
+        }
     }
 
     private func updateDockLabelIconPosition() {

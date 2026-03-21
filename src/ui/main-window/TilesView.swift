@@ -19,6 +19,9 @@ class TilesView {
     static var contentView: EffectView!
     static var searchField = NSSearchField(frame: .zero)
     static var noWindowLabel = NSTextField(labelWithString: NSLocalizedString("No Window", comment: ""))
+    static var windowHintMode = true
+    static var windowHintKeyBuffer = ""
+    private static var windowHintLabelAtIndex = [String]()
     private(set) static var searchMode: SearchMode = .off
     static var rows = [[TileView]]()
     private static var lastRowSignature = [Int]()
@@ -58,6 +61,101 @@ class TilesView {
         TilesPanel.shared.resetFrozenPosition()
         searchMode = .off
         updateSearchFieldEditability()
+    }
+
+    static func resetWindowHintState() {
+        windowHintMode = true
+        windowHintKeyBuffer = ""
+    }
+
+    static func exitWindowHintMode() {
+        guard windowHintMode else { return }
+        windowHintMode = false
+        windowHintKeyBuffer = ""
+        applyWindowHintLabels()
+        focusSelectedTileIfPossible()
+        Windows.voiceOverWindow()
+    }
+
+    static func handleWindowHintKeyDown(_ event: NSEvent, _ isARepeat: Bool) -> Bool {
+        guard windowHintMode else { return false }
+        if isARepeat { return false }
+        if event.type != .keyDown { return false }
+        if event.keyCode == UInt16(kVK_Escape) {
+            exitWindowHintMode()
+            return true
+        }
+        let blocked = event.modifierFlags.intersection([.option, .command, .control])
+        if !blocked.isEmpty { return false }
+        guard let ch = keyCharacterForWindowHint(event) else { return false }
+        guard WindowHintLabels.isHintCharacter(ch) else { return false }
+        return processWindowHintCharacter(ch)
+    }
+
+    private static func keyCharacterForWindowHint(_ event: NSEvent) -> String? {
+        let s = event.charactersIgnoringModifiers ?? event.characters ?? ""
+        guard let first = s.first else { return nil }
+        return String(first).lowercased()
+    }
+
+    private static func processWindowHintCharacter(_ ch: String) -> Bool {
+        let newBuffer = windowHintKeyBuffer + ch
+        let matches = (0..<Windows.list.count).filter { i in
+            let label = i < windowHintLabelAtIndex.count ? windowHintLabelAtIndex[i] : ""
+            return !label.isEmpty && label.hasPrefix(newBuffer)
+        }
+        if matches.isEmpty {
+            windowHintKeyBuffer = ch
+            let retry = (0..<Windows.list.count).filter { i in
+                let label = i < windowHintLabelAtIndex.count ? windowHintLabelAtIndex[i] : ""
+                return !label.isEmpty && label.hasPrefix(windowHintKeyBuffer)
+            }
+            if retry.count == 1, retry[0] < windowHintLabelAtIndex.count, windowHintLabelAtIndex[retry[0]] == windowHintKeyBuffer {
+                activateWindowFromHint(retry[0])
+                return true
+            }
+            if retry.isEmpty {
+                windowHintKeyBuffer = ""
+                return false
+            }
+            return true
+        }
+        windowHintKeyBuffer = newBuffer
+        if matches.count == 1, matches[0] < windowHintLabelAtIndex.count, windowHintLabelAtIndex[matches[0]] == windowHintKeyBuffer {
+            activateWindowFromHint(matches[0])
+            return true
+        }
+        return true
+    }
+
+    private static func activateWindowFromHint(_ index: Int) {
+        windowHintKeyBuffer = ""
+        Windows.updateSelectedAndHoveredWindowIndex(index)
+        App.focusSelectedWindow(Windows.selectedWindow())
+    }
+
+    private static func syncWindowHintLabelMap() {
+        windowHintLabelAtIndex = Array(repeating: "", count: Windows.list.count)
+        let visibleCount = (0..<Windows.list.count).filter { Windows.shouldDisplay(Windows.list[$0]) }.count
+        let labels = WindowHintLabels.labels(for: visibleCount)
+        var li = 0
+        for i in 0..<Windows.list.count {
+            guard Windows.shouldDisplay(Windows.list[i]) else { continue }
+            if li < labels.count {
+                windowHintLabelAtIndex[i] = labels[li]
+            }
+            li += 1
+        }
+    }
+
+    private static func applyWindowHintLabels() {
+        syncWindowHintLabelMap()
+        for i in 0..<Windows.list.count {
+            guard i < recycledViews.count else { break }
+            let label = i < windowHintLabelAtIndex.count ? windowHintLabelAtIndex[i] : ""
+            let show = windowHintMode && !label.isEmpty
+            recycledViews[i].updateWindowHintBadge(show ? label : nil)
+        }
     }
 
     static func toggleSearchModeFromShortcut() {
@@ -342,6 +440,7 @@ class TilesView {
                 lastRowSignature = rowSignature
             }
             highlightStartView()
+            applyWindowHintLabels()
             if let preservedScrollOrigin {
                 restoreScrollOrigin(preservedScrollOrigin)
             }

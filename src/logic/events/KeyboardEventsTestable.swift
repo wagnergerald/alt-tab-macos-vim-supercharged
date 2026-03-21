@@ -11,6 +11,12 @@ class KeyboardEventsTestable {
 
 @discardableResult
 func handleKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?, _ keyCode: UInt32?, _ modifiers: NSEvent.ModifierFlags?, _ isARepeat: Bool, _ event: NSEvent? = nil) -> Bool {
+    if let event, event.type == .keyDown, App.appIsBeingUsed, TilesPanel.shared.isKeyWindow,
+       !TilesView.isSearchModeOn, !ContextMenuEvents.isMenuOpen, TilesView.windowHintMode {
+        if TilesView.handleWindowHintKeyDown(event, isARepeat) {
+            return true
+        }
+    }
     if let event, shouldAbsorbSearchEditingKeyDown(event) {
         switch TilesView.handleSearchEditingKeyDown(event) {
         case .handled: return true
