@@ -1,3 +1,4 @@
+import Cocoa
 import ShortcutRecorder
 
 class KeyboardEventsTestable {
@@ -12,7 +13,14 @@ class KeyboardEventsTestable {
 @discardableResult
 func handleKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?, _ keyCode: UInt32?, _ modifiers: NSEvent.ModifierFlags?, _ isARepeat: Bool, _ event: NSEvent? = nil) -> Bool {
     if let event, event.type == .keyDown, App.appIsBeingUsed, TilesPanel.shared.isKeyWindow,
-       !TilesView.isSearchModeOn, !ContextMenuEvents.isMenuOpen, TilesView.windowHintMode {
+       !event.isARepeat,
+       matchesActivePanelShortcut(event, "dismissSwitcherShortcut") {
+        App.hideUi()
+        return true
+    }
+    if let event, event.type == .keyDown, App.appIsBeingUsed, TilesPanel.shared.isKeyWindow,
+       !TilesView.isSearchEditing, !ContextMenuEvents.isMenuOpen,
+       Preferences.windowHintsEnabled, TilesView.windowHintMode {
         if TilesView.handleWindowHintKeyDown(event, isARepeat) {
             return true
         }
@@ -43,6 +51,15 @@ private func logKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?,
         let keyCodeAsString = keyCode.flatMap { SymbolicKeyCodeTransformer.shared.transformedValue(NSNumber(value: $0)) }
         return "keys:\(modifiersAsString ?? "")\(keyCodeAsString ?? "") isARepeat:\(isARepeat)"
     }
+}
+
+private func matchesActivePanelShortcut(_ event: NSEvent, _ shortcutId: String) -> Bool {
+    guard let shortcut = ControlsTab.shortcuts[shortcutId]?.shortcut else { return false }
+    if shortcut.keyCode == .none || shortcut.carbonKeyCode != UInt32(event.keyCode) { return false }
+    let holdModifiers = ControlsTab.shortcuts[Preferences.indexToName("holdShortcut", App.shortcutIndex)]?.shortcut.carbonModifierFlags.cleaned() ?? 0
+    let eventModifiers = cocoaToCarbonFlags(event.modifierFlags).cleaned()
+    let shortcutModifiers = shortcut.carbonModifierFlags.cleaned()
+    return eventModifiers == shortcutModifiers || eventModifiers == (shortcutModifiers | holdModifiers)
 }
 
 private func shouldAbsorbSearchEditingKeyDown(_ event: NSEvent?) -> Bool {

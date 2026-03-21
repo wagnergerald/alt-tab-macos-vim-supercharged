@@ -134,6 +134,7 @@ class ControlsTab {
         "hideShowAppShortcut": { App.hideShowSelectedApp() },
         "searchShortcut": { App.toggleSearchMode() },
         "lockSearchShortcut": { App.lockSearchMode() },
+        "dismissSwitcherShortcut": { App.hideUi() },
     ]
     static var arrowKeysCheckbox: Switch!
     static var vimKeysCheckbox: Switch!
@@ -151,7 +152,7 @@ class ControlsTab {
     private static let gestureSelectionIndex = -1
     private static let staticManagedShortcutPreferences = [
         "focusWindowShortcut", "previousWindowShortcut", "cancelShortcut", "searchShortcut", "lockSearchShortcut",
-        "closeWindowShortcut", "minDeminWindowShortcut", "toggleFullscreenWindowShortcut", "quitAppShortcut", "hideShowAppShortcut",
+        "closeWindowShortcut", "minDeminWindowShortcut", "toggleFullscreenWindowShortcut", "dismissSwitcherShortcut", "quitAppShortcut", "hideShowAppShortcut",
     ]
     private static let removableShortcutPreferences = [
         "holdShortcut", "nextWindowShortcut",
@@ -211,6 +212,10 @@ class ControlsTab {
             applyArrowKeysPreference()
         case "vimKeysEnabled" where vimKeysCheckbox == nil:
             applyVimKeysPreferenceWithoutDialogs()
+        case "windowHintsEnabled":
+            if App.appIsBeingUsed {
+                TilesView.onWindowHintsPreferenceChanged()
+            }
         default:
             break
         }

@@ -8,6 +8,8 @@ class ShortcutsWhenActiveSheet: SheetWindow {
             rightViews: [LabelAndControl.makeLabelWithRecorder(NSLocalizedString("Select previous window", comment: ""), "previousWindowShortcut", Preferences.previousWindowShortcut, labelPosition: .right)[0]])
         let cancelShortcut = TableGroupView.Row(leftTitle: NSLocalizedString("Cancel", comment: ""),
             rightViews: [LabelAndControl.makeLabelWithRecorder(NSLocalizedString("Cancel", comment: ""), "cancelShortcut", Preferences.cancelShortcut, labelPosition: .right)[0]])
+        let dismissSwitcherShortcut = TableGroupView.Row(leftTitle: NSLocalizedString("Close the switcher immediately", comment: ""),
+            rightViews: [LabelAndControl.makeLabelWithRecorder(NSLocalizedString("Close the switcher immediately", comment: ""), "dismissSwitcherShortcut", Preferences.dismissSwitcherShortcut, labelPosition: .right)[0]])
         let searchShortcut = TableGroupView.Row(leftTitle: NSLocalizedString("Search", comment: ""),
             rightViews: [LabelAndControl.makeLabelWithRecorder(NSLocalizedString("Search", comment: ""), "searchShortcut", Preferences.searchShortcut, labelPosition: .right)[0]])
         let lockSearchShortcut = TableGroupView.Row(leftTitle: NSLocalizedString("Lock search", comment: ""),
@@ -26,6 +28,7 @@ class ShortcutsWhenActiveSheet: SheetWindow {
         _ = table.addRow(focusWindowShortcut)
         _ = table.addRow(previousWindowShortcut)
         _ = table.addRow(cancelShortcut)
+        _ = table.addRow(dismissSwitcherShortcut)
         _ = table.addRow(searchShortcut)
         _ = table.addRow(lockSearchShortcut)
         _ = table.addRow(closeWindowShortcut)

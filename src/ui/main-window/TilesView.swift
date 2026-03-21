@@ -19,7 +19,7 @@ class TilesView {
     static var contentView: EffectView!
     static var searchField = NSSearchField(frame: .zero)
     static var noWindowLabel = NSTextField(labelWithString: NSLocalizedString("No Window", comment: ""))
-    static var windowHintMode = true
+    static var windowHintMode = false
     static var windowHintKeyBuffer = ""
     private static var windowHintLabelAtIndex = [String]()
     private(set) static var searchMode: SearchMode = .off
@@ -64,12 +64,24 @@ class TilesView {
     }
 
     static func resetWindowHintState() {
-        windowHintMode = true
+        windowHintMode = Preferences.windowHintsEnabled
         windowHintKeyBuffer = ""
     }
 
+    static func onWindowHintsPreferenceChanged() {
+        if !Preferences.windowHintsEnabled {
+            windowHintMode = false
+            windowHintKeyBuffer = ""
+        } else {
+            windowHintMode = true
+        }
+        applyWindowHintLabels()
+        focusSelectedTileIfPossible()
+        Windows.voiceOverWindow()
+    }
+
     static func exitWindowHintMode() {
-        guard windowHintMode else { return }
+        guard Preferences.windowHintsEnabled, windowHintMode else { return }
         windowHintMode = false
         windowHintKeyBuffer = ""
         applyWindowHintLabels()
@@ -78,7 +90,7 @@ class TilesView {
     }
 
     static func handleWindowHintKeyDown(_ event: NSEvent, _ isARepeat: Bool) -> Bool {
-        guard windowHintMode else { return false }
+        guard Preferences.windowHintsEnabled, windowHintMode else { return false }
         if isARepeat { return false }
         if event.type != .keyDown { return false }
         if event.keyCode == UInt16(kVK_Escape) {
@@ -153,7 +165,7 @@ class TilesView {
         for i in 0..<Windows.list.count {
             guard i < recycledViews.count else { break }
             let label = i < windowHintLabelAtIndex.count ? windowHintLabelAtIndex[i] : ""
-            let show = windowHintMode && !label.isEmpty
+            let show = Preferences.windowHintsEnabled && windowHintMode && !label.isEmpty
             recycledViews[i].updateWindowHintBadge(show ? label : nil)
         }
     }

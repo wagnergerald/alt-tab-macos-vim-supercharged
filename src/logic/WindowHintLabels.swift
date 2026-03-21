@@ -6,6 +6,22 @@ enum WindowHintLabels {
         charsetSet.contains(c)
     }
 
+    static func circledGlyphString(for text: String) -> String {
+        text.map { circledGlyph($0) }.joined()
+    }
+
+    private static func circledGlyph(_ c: Character) -> String {
+        if let ascii = c.asciiValue, ascii >= Character("a").asciiValue!, ascii <= Character("z").asciiValue! {
+            let idx = Int(ascii - Character("a").asciiValue!)
+            return String(UnicodeScalar(0x24D0 + idx)!)
+        }
+        if let d = c.wholeNumberValue, d >= 0, d <= 9 {
+            if d == 0 { return "\u{24EA}" }
+            return String(UnicodeScalar(0x2460 + d - 1)!)
+        }
+        return String(c)
+    }
+
     static func labels(for count: Int) -> [String] {
         guard count > 0 else { return [] }
         let n = charset.count

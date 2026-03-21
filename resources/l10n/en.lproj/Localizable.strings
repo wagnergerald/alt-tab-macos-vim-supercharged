@@ -62,6 +62,7 @@
 "Check for updates…" = "Check for updates…";
 "Check permissions…" = "Check permissions…";
 "Close window" = "Close window";
+"Close the switcher immediately" = "Close the switcher immediately";
 "Conflicting shortcut" = "Conflicting shortcut";
 "Controls" = "Controls";
 "Crash reports policy" = "Crash reports policy";
@@ -222,6 +223,7 @@
 "Show standard tabs as windows" = "Show standard tabs as windows";
 "Show standard tabs as windows:" = "Show standard tabs as windows:";
 "Show titles" = "Show titles";
+"Show window hints on thumbnails" = "Show window hints on thumbnails";
 "Show windows from applications" = "Show windows from applications";
 "Show windows from screens" = "Show windows from screens";
 "Show windows from Spaces" = "Show windows from Spaces";
@@ -287,6 +289,7 @@
 "Window title contains" = "Window title contains";
 "Window title font size:" = "Window title font size:";
 "Window title truncation:" = "Window title truncation:";
+"windowHints.explanation" = "When enabled, each thumbnail shows a short shortcut (similar to link hints in a browser). Type the keys to switch to that window. Press Escape to use arrows, Tab, or vim keys instead. When search is locked, hints match the filtered list; while you are typing in the search field, hints are paused.";
 "Windows" = "Windows";
 "You can’t undo this action." = "You can’t undo this action.";
 "You didn’t write your email, thus can’t receive any response." = "You didn’t write your email, thus can’t receive any response.";

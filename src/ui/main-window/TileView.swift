@@ -11,7 +11,7 @@ class TileView: FlippedView {
     var label = TileTitleView(font: Appearance.font)
     var statusIcons = StatusIconsView()
     var dockLabelIcon = TileFontIconView(badgeSize: TileFontIconView.badgeBaseSize(forIconSize: TileView.iconSize().width))
-    var windowHintBadge = TileFontIconView(badgeSize: max(14, TileFontIconView.badgeBaseSize(forIconSize: TileView.iconSize().width)))
+    var windowHintBadge = WindowHintLabelView()
     var windowlessAppIndicator = WindowlessAppIndicator(tooltip: TileView.noOpenWindowToolTip)
     private var fullTitle = ""
     private var fullTitleWidth = CGFloat(0)
@@ -457,12 +457,9 @@ class TileView: FlippedView {
             return
         }
         windowHintBadge.isHidden = false
-        windowHintBadge.setText(text)
+        windowHintBadge.setLabelText(text)
         windowHintBadge.setAccessibilityLabel("Window hint \(text)")
-        let sz = windowHintBadge.fittingSize
-        if sz.width > 0, sz.height > 0 {
-            windowHintBadge.setFrameSize(NSSize(width: ceil(sz.width), height: ceil(sz.height)))
-        }
+        windowHintBadge.setFrameSize(windowHintBadge.intrinsicContentSize)
         updateWindowHintBadgePosition()
     }
 

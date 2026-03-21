@@ -328,6 +328,7 @@ class App: AppCenterApplication {
 
     static func buildUiAndShowPanel() {
         guard appIsBeingUsed else { return }
+        TilesView.resetWindowHintState()
         Appearance.update()
         guard appIsBeingUsed else { return }
         refreshUi()
