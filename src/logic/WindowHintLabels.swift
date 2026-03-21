@@ -1,9 +1,26 @@
+import Cocoa
+import ShortcutRecorder
+
 enum WindowHintLabels {
-    private static let charset: [Character] = Array("asdfghjklqwertyuiopzxcvbnm1234567890")
-    private static let charsetSet: Set<String> = Set(charset.map { String($0) })
+    private static let baseCharset: [Character] = Array("hjkluiopnmasdfgqwertyzxcvb1234567890")
+
+    private static func dismissSwitcherExcludedCharacter() -> String? {
+        guard let sc = Preferences.shortcut("dismissSwitcherShortcut"), sc.keyCode != .none else { return nil }
+        let code = UInt32(sc.carbonKeyCode)
+        guard let any = LiteralKeyCodeTransformer.shared.transformedValue(NSNumber(value: code)) else { return nil }
+        let trimmed = String(describing: any).trimmingCharacters(in: .whitespaces)
+        guard trimmed.count == 1, let c = trimmed.first else { return nil }
+        if c.isLetter || c.isNumber { return String(c).lowercased() }
+        return nil
+    }
+
+    private static func charset() -> [Character] {
+        guard let ex = dismissSwitcherExcludedCharacter() else { return Array(baseCharset) }
+        return baseCharset.filter { String($0).lowercased() != ex }
+    }
 
     static func isHintCharacter(_ c: String) -> Bool {
-        charsetSet.contains(c)
+        Set(charset().map { String($0) }).contains(c)
     }
 
     static func circledGlyphString(for text: String) -> String {
@@ -23,8 +40,9 @@ enum WindowHintLabels {
     }
 
     static func labels(for count: Int) -> [String] {
-        guard count > 0 else { return [] }
-        let n = charset.count
+        let chars = charset()
+        guard count > 0, !chars.isEmpty else { return [] }
+        let n = chars.count
         var width = 1
         var capacity = n
         while capacity < count {
@@ -32,18 +50,18 @@ enum WindowHintLabels {
             capacity *= n
         }
         var result: [String] = []
-        fillLength(width, "", &result, count)
+        fillLength(width, "", &result, count, chars)
         return result
     }
 
-    private static func fillLength(_ len: Int, _ built: String, _ result: inout [String], _ max: Int) {
+    private static func fillLength(_ len: Int, _ built: String, _ result: inout [String], _ max: Int, _ chars: [Character]) {
         guard result.count < max else { return }
         if built.count == len {
             result.append(built)
             return
         }
-        for c in charset {
-            fillLength(len, built + String(c), &result, max)
+        for c in chars {
+            fillLength(len, built + String(c), &result, max, chars)
         }
     }
 }

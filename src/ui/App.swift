@@ -392,13 +392,11 @@ class App: AppCenterApplication {
 
 extension App: NSApplicationDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        Self.turnOffAppKitConstraintVisualizationDebugKeys()
         App.appCenterDelegate = AppCenterCrash()
         App.shared.disableRelaunchOnLogin()
         Logger.initialize()
         Logger.info { "Launching AltTab \(App.version)" }
-        #if DEBUG
-        UserDefaults.standard.set(true, forKey: "NSConstraintBasedLayoutVisualizeMutuallyExclusiveConstraints")
-        #endif
         #if !DEBUG
         PFMoveToApplicationsFolderIfNecessary()
         #endif
@@ -422,6 +420,19 @@ extension App: NSApplicationDelegate {
         Logger.info { "" }
         makeSureAllCapturesAreFinished()
         return .terminateNow
+    }
+
+    /// AppKit reads these keys from UserDefaults (app, global, or `-Key YES` launch args). Leftover YES from debugging draws purple constraint / alignment overlays.
+    private static func turnOffAppKitConstraintVisualizationDebugKeys() {
+        let keys = [
+            "NSConstraintBasedLayoutVisualizeMutuallyExclusiveConstraints",
+            "NSShowAlignmentRects",
+            "NSShowAllViews",
+        ]
+        var registration: [String: Any] = [:]
+        for k in keys { registration[k] = false }
+        UserDefaults.standard.register(defaults: registration)
+        for k in keys { UserDefaults.standard.set(false, forKey: k) }
     }
 }
 

@@ -107,6 +107,7 @@ class CustomRecorderControlTestable {
         for newCombo in newCombos {
             for oldCombo in oldCombos {
                 guard !(newCombo.0 == oldCombo.0) else { continue }
+                if dismissSwitcherAndQuitAppPair(newCombo.0, oldCombo.0) { continue }
                 if (newCombo.1.keyCode == oldCombo.1.keyCode && newCombo.1.modifierFlags == oldCombo.1.modifierFlags)
                     // special case when 2 nextWindowShortcuts are modifiers-only (e.g. S1: alt + shift, S2: alt+command + shift)
                     // they will conflict if they their holdShortcuts are included in the other's holdShortcuts
@@ -116,6 +117,11 @@ class CustomRecorderControlTestable {
             }
         }
         return nil
+    }
+
+    private static func dismissSwitcherAndQuitAppPair(_ idA: String, _ idB: String) -> Bool {
+        let pair: Set = [idA, idB]
+        return pair == ["dismissSwitcherShortcut", "quitAppShortcut"]
     }
 
     /// commandTab and commandKeyAboveTab are self-contained in the "nextWindowShortcut" shortcuts

@@ -18,6 +18,10 @@ class Preferences {
             "hideShowAppShortcut": defaultShortcut("H"),
             "searchShortcut": defaultShortcut("S"),
             "dismissSwitcherShortcut": defaultShortcut("Q"),
+            "vimCycleLeft": defaultShortcut("h"),
+            "vimCycleRight": defaultShortcut("l"),
+            "vimCycleUp": defaultShortcut("k"),
+            "vimCycleDown": defaultShortcut("j"),
             "arrowKeysEnabled": "true",
             "vimKeysEnabled": "false",
             "windowHintsEnabled": "false",
@@ -78,6 +82,7 @@ class Preferences {
         "focusWindowShortcut", "previousWindowShortcut", "cancelShortcut", "lockSearchShortcut", "closeWindowShortcut",
         "minDeminWindowShortcut", "toggleFullscreenWindowShortcut", "quitAppShortcut", "hideShowAppShortcut", "searchShortcut",
         "dismissSwitcherShortcut",
+        "vimCycleLeft", "vimCycleRight", "vimCycleUp", "vimCycleDown",
     ]
     static var allShortcutPreferenceKeys: [String] {
         staticShortcutKeys + (0..<maxShortcutCount).flatMap { [indexToName("holdShortcut", $0), indexToName("nextWindowShortcut", $0)] }
@@ -199,6 +204,14 @@ class Preferences {
 
     static func shortcut(_ key: String) -> Shortcut? {
         CachedUserDefaults.shortcut(key)
+    }
+
+    static func shortcutDisplayString(_ key: String) -> String {
+        guard let objectValue = UserDefaults.standard.object(forKey: key) as? [String: Any],
+              let s = objectValue[shortcutStorageStringField] as? String, !s.isEmpty else {
+            return shortcut(key)?.readableStringRepresentation(isASCII: true) ?? ""
+        }
+        return s
     }
 
     static func set<T>(_ key: String, _ value: T, _ notify: Bool = true) where T: Encodable {

@@ -153,6 +153,7 @@ class ControlsTab {
     private static let staticManagedShortcutPreferences = [
         "focusWindowShortcut", "previousWindowShortcut", "cancelShortcut", "searchShortcut", "lockSearchShortcut",
         "closeWindowShortcut", "minDeminWindowShortcut", "toggleFullscreenWindowShortcut", "dismissSwitcherShortcut", "quitAppShortcut", "hideShowAppShortcut",
+        "vimCycleLeft", "vimCycleRight", "vimCycleUp", "vimCycleDown",
     ]
     private static let removableShortcutPreferences = [
         "holdShortcut", "nextWindowShortcut",
@@ -166,12 +167,7 @@ class ControlsTab {
         "windowOrder",
     ]
     private static let arrowKeys = ["←", "→", "↑", "↓"]
-    private static let vimKeyActions = [
-        "h": "vimCycleLeft",
-        "l": "vimCycleRight",
-        "k": "vimCycleUp",
-        "j": "vimCycleDown",
-    ]
+    private static let vimNavigationControlIds = ["vimCycleLeft", "vimCycleRight", "vimCycleUp", "vimCycleDown"]
 
     private static var selectedShortcutIndex = 0
     private static var shortcutRowsStackView: NSStackView?
@@ -208,6 +204,9 @@ class ControlsTab {
             refreshShortcutRows()
         case let k where staticManagedShortcutPreferences.contains(k):
             applyShortcutPreference(k)
+            if k == "dismissSwitcherShortcut" || k == "quitAppShortcut" || k == "cancelShortcut" {
+                TilesView.onWindowHintsShortcutDisplayChanged()
+            }
         case "arrowKeysEnabled":
             applyArrowKeysPreference()
         case "vimKeysEnabled" where vimKeysCheckbox == nil:
@@ -738,6 +737,10 @@ class ControlsTab {
                 shortcutChangedCallback(nextWindowShortcut)
             }
         } else {
+            if vimNavigationControlIds.contains(controlId) {
+                applyShortcutPreference(controlId)
+                return
+            }
             let newShortcut = combineHoldAndNextWindow(controlId, sender)
             if newShortcut == nil {
                 removeShortcutIfExists(controlId)
@@ -775,26 +778,35 @@ class ControlsTab {
     @objc static func vimKeysEnabledCallback(_ sender: NSControl) {
         if (sender as! Switch).state == .on {
             if isClearVimKeysSuccessful() {
-                vimKeyActions.forEach { addShortcut(.down, .local, Shortcut(keyEquivalent: $0)!, $1, nil) }
+                applyVimKeysPreferenceWithoutDialogs()
             } else {
                 (sender as! Switch).state = .off
                 Preferences.remove("vimKeysEnabled")
             }
         } else {
-            vimKeyActions.forEach { removeShortcutIfExists($1) }
+            applyVimKeysPreferenceWithoutDialogs()
         }
     }
 
+    private static func vimNavigationShortcutCharacterKeys() -> Set<String> {
+        var keys = Set<String>()
+        for id in vimNavigationControlIds {
+            guard let chars = Preferences.shortcut(id)?.characters?.lowercased(), let first = chars.first else { continue }
+            keys.insert(String(first))
+        }
+        return keys
+    }
+
     private static func isClearVimKeysSuccessful() -> Bool {
+        let vimChars = vimNavigationShortcutCharacterKeys()
         var conflicts = [String: String]()
         shortcuts.forEach {
-            let keymap = $1.shortcut.characters
-            if keymap != nil && vimKeyActions.keys.contains(keymap!) {
-                let control_id = $1.id
-                guard !vimKeyActions.values.contains(control_id) else { return }
-                if let label = conflictLabel(control_id) {
-                    conflicts[control_id] = label
-                }
+            guard let keymap = $1.shortcut.characters?.lowercased(), let first = keymap.first else { return }
+            guard vimChars.contains(String(first)) else { return }
+            let control_id = $1.id
+            guard !vimNavigationControlIds.contains(control_id) else { return }
+            if let label = conflictLabel(control_id) {
+                conflicts[control_id] = label
             }
         }
         if !conflicts.isEmpty {
@@ -821,7 +833,7 @@ class ControlsTab {
         if arrowKeys.contains(controlId) {
             return NSLocalizedString("Arrow keys", comment: "")
         }
-        if vimKeyActions.values.contains(controlId) {
+        if vimNavigationControlIds.contains(controlId) {
             return NSLocalizedString("Vim keys", comment: "")
         }
         return nil
@@ -860,6 +872,18 @@ class ControlsTab {
         if controlId.hasPrefix("holdShortcut") {
             applyHoldShortcutPreference(controlId)
             applyShortcutPreference(Preferences.indexToName("nextWindowShortcut", Preferences.nameToIndex(controlId)))
+            return
+        }
+        if vimNavigationControlIds.contains(controlId) {
+            guard Preferences.vimKeysEnabled else {
+                removeShortcutIfExists(controlId)
+                return
+            }
+            guard let shortcut = Preferences.shortcut(controlId) else {
+                removeShortcutIfExists(controlId)
+                return
+            }
+            addShortcut(.down, .local, shortcut, controlId, nil)
             return
         }
         guard let shortcut = combinedShortcut(controlId) else {
@@ -904,23 +928,23 @@ class ControlsTab {
 
     private static func applyVimKeysPreferenceWithoutDialogs() {
         guard Preferences.vimKeysEnabled else {
-            vimKeyActions.forEach { removeShortcutIfExists($1) }
+            vimNavigationControlIds.forEach { removeShortcutIfExists($0) }
             return
         }
         if hasVimKeysConflictWithoutUi() {
-            vimKeyActions.forEach { removeShortcutIfExists($1) }
+            vimNavigationControlIds.forEach { removeShortcutIfExists($0) }
             Preferences.set("vimKeysEnabled", "false", false)
             return
         }
-        vimKeyActions.forEach { addShortcut(.down, .local, Shortcut(keyEquivalent: $0)!, $1, nil) }
+        vimNavigationControlIds.forEach { applyShortcutPreference($0) }
     }
 
     private static func hasVimKeysConflictWithoutUi() -> Bool {
+        let vimChars = vimNavigationShortcutCharacterKeys()
         return shortcuts.values.contains {
-            if let key = $0.shortcut.characters, vimKeyActions.keys.contains(key) {
-                return !vimKeyActions.values.contains($0.id)
-            }
-            return false
+            guard let key = $0.shortcut.characters?.lowercased(), let first = key.first else { return false }
+            guard vimChars.contains(String(first)) else { return false }
+            return !vimNavigationControlIds.contains($0.id)
         }
     }
 

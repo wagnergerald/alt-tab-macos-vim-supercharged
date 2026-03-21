@@ -1,5 +1,6 @@
 import Cocoa
 import Carbon.HIToolbox.Events
+import Carbon
 import ShortcutRecorder
 
 enum SearchMode {
@@ -14,12 +15,31 @@ enum SearchKeyResult {
     case passToShortcuts
 }
 
+enum ChooserHintMode: Equatable {
+    case normal
+    case focusHints
+    case minimizeHints
+    case closeHints
+    case quitHints
+    case fullscreenHints
+    case hideHints
+}
+
 class TilesView {
     static var scrollView: ScrollView!
     static var contentView: EffectView!
     static var searchField = NSSearchField(frame: .zero)
     static var noWindowLabel = NSTextField(labelWithString: NSLocalizedString("No Window", comment: ""))
-    static var windowHintMode = false
+    private static let chooserBannerChromeHeight: CGFloat = 120
+    private static let hintBannerGap: CGFloat = 4
+    private static let searchTabHintGap: CGFloat = 8
+    private static let chooserBannerStack = NSStackView()
+    private static var chooserBannerTitleLabel = NSTextField(labelWithString: "")
+    private static var chooserBannerDetailLabel = NSTextField(wrappingLabelWithString: "")
+    private static var chooserBannerShortcutsLabel = NSTextField(wrappingLabelWithString: "")
+    private static var searchTabHintLabel = NSTextField(labelWithString: "")
+    static var chooserHintMode: ChooserHintMode = .normal
+    static var windowHintMode: Bool { chooserHintMode != .normal }
     static var windowHintKeyBuffer = ""
     static var searchFieldYieldsToHints = false
     private static var windowHintLabelAtIndex = [String]()
@@ -38,6 +58,7 @@ class TilesView {
         guard !initialized else { return }
         configureSearchField()
         configureNoWindowLabel()
+        configureHintChrome()
         updateBackgroundView()
         // TODO: think about this optimization more
         (1...20).forEach { _ in TilesView.recycledViews.append(TileView()) }
@@ -67,27 +88,36 @@ class TilesView {
     }
 
     static func resetWindowHintState() {
-        windowHintMode = Preferences.windowHintsEnabled
+        chooserHintMode = Preferences.windowHintsEnabled ? .focusHints : .normal
         windowHintKeyBuffer = ""
     }
 
     static func onWindowHintsPreferenceChanged() {
         if !Preferences.windowHintsEnabled {
-            windowHintMode = false
+            chooserHintMode = .normal
             windowHintKeyBuffer = ""
         } else {
-            windowHintMode = true
+            chooserHintMode = .focusHints
         }
         applyWindowHintLabels()
+        syncWindowHintsChromeBanners()
         focusSelectedTileIfPossible()
         Windows.voiceOverWindow()
+        syncSearchFieldTabHintToolTip()
+    }
+
+    static func onWindowHintsShortcutDisplayChanged() {
+        guard App.appIsBeingUsed else { return }
+        applyWindowHintLabels()
+        syncWindowHintsChromeBanners()
     }
 
     static func exitWindowHintMode() {
-        guard Preferences.windowHintsEnabled, windowHintMode else { return }
-        windowHintMode = false
+        guard Preferences.windowHintsEnabled, chooserHintMode != .normal else { return }
+        chooserHintMode = .normal
         windowHintKeyBuffer = ""
         applyWindowHintLabels()
+        syncWindowHintsChromeBanners()
         focusSelectedTileIfPossible()
         Windows.voiceOverWindow()
     }
@@ -146,7 +176,61 @@ class TilesView {
     private static func activateWindowFromHint(_ index: Int) {
         windowHintKeyBuffer = ""
         Windows.updateSelectedAndHoveredWindowIndex(index)
-        App.focusSelectedWindow(Windows.selectedWindow())
+        switch chooserHintMode {
+        case .normal, .focusHints:
+            App.focusSelectedWindow(Windows.selectedWindow())
+        case .minimizeHints:
+            App.minDeminSelectedWindow()
+            App.refreshUi(true)
+        case .closeHints:
+            App.closeSelectedWindow()
+        case .quitHints:
+            App.quitSelectedApp()
+        case .fullscreenHints:
+            App.toggleFullscreenSelectedWindow()
+            App.refreshUi(true)
+        case .hideHints:
+            App.hideShowSelectedApp()
+            App.refreshUi(true)
+        }
+    }
+
+    static func tryEnterChooserHintModeFromEvent(_ event: NSEvent) -> Bool {
+        guard Preferences.windowHintsEnabled, chooserHintMode == .normal else { return false }
+        guard event.type == .keyDown, !event.isARepeat else { return false }
+        let pairs: [(String, ChooserHintMode)] = [
+            ("focusWindowShortcut", .focusHints),
+            ("minDeminWindowShortcut", .minimizeHints),
+            ("closeWindowShortcut", .closeHints),
+            ("quitAppShortcut", .quitHints),
+            ("toggleFullscreenWindowShortcut", .fullscreenHints),
+            ("hideShowAppShortcut", .hideHints),
+        ]
+        for (id, mode) in pairs {
+            guard matchesControlChordForModeEntry(event, id) else { continue }
+            chooserHintMode = mode
+            windowHintKeyBuffer = ""
+            applyWindowHintLabels()
+            syncWindowHintsChromeBanners()
+            focusSelectedTileIfPossible()
+            App.refreshUi(true)
+            Windows.voiceOverWindow()
+            return true
+        }
+        return false
+    }
+
+    private static func matchesControlChordForModeEntry(_ event: NSEvent, _ shortcutId: String) -> Bool {
+        guard let shortcut = ControlsTab.shortcuts[shortcutId]?.shortcut, shortcut.keyCode != .none else { return false }
+        guard event.keyCode == UInt16(shortcut.carbonKeyCode) else { return false }
+        guard event.modifierFlags.contains(.control) else { return false }
+        let holdMods = ControlsTab.shortcuts[Preferences.indexToName("holdShortcut", App.shortcutIndex)]?.shortcut.carbonModifierFlags.cleaned() ?? 0
+        let eventMods = cocoaToCarbonFlags(event.modifierFlags).cleaned()
+        let sm = shortcut.carbonModifierFlags.cleaned()
+        let shiftPart = sm & UInt32(shiftKey)
+        let base = UInt32(controlKey) | shiftPart
+        let withHold = base | holdMods
+        return eventMods == base || eventMods == withHold
     }
 
     private static func syncWindowHintLabelMap() {
@@ -239,10 +323,12 @@ class TilesView {
                 searchFieldYieldsToHints = false
                 TilesPanel.shared.makeFirstResponder(searchField)
                 placeSearchCaretAtEnd()
+                syncSearchFieldTabHintToolTip()
                 return .handled
             }
             searchFieldYieldsToHints = true
             focusSelectedTileIfPossible()
+            syncSearchFieldTabHintToolTip()
             return .handled
         }
         if matchesShortcut(event, "cancelShortcut") ||
@@ -256,6 +342,42 @@ class TilesView {
         noWindowLabel.font = .systemFont(ofSize: 13)
         noWindowLabel.alignment = .center
         noWindowLabel.isHidden = true
+    }
+
+    private static func configureHintChrome() {
+        chooserBannerTitleLabel.isEditable = false
+        chooserBannerTitleLabel.isBordered = false
+        chooserBannerTitleLabel.drawsBackground = false
+        chooserBannerTitleLabel.alignment = .center
+        chooserBannerTitleLabel.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
+        chooserBannerTitleLabel.textColor = NSColor.labelColor
+        chooserBannerDetailLabel.isEditable = false
+        chooserBannerDetailLabel.isBordered = false
+        chooserBannerDetailLabel.drawsBackground = false
+        chooserBannerDetailLabel.alignment = .center
+        chooserBannerDetailLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        chooserBannerDetailLabel.textColor = NSColor.secondaryLabelColor
+        chooserBannerDetailLabel.maximumNumberOfLines = 0
+        chooserBannerShortcutsLabel.isEditable = false
+        chooserBannerShortcutsLabel.isBordered = false
+        chooserBannerShortcutsLabel.drawsBackground = false
+        chooserBannerShortcutsLabel.alignment = .center
+        chooserBannerShortcutsLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
+        chooserBannerShortcutsLabel.textColor = NSColor.secondaryLabelColor
+        chooserBannerShortcutsLabel.maximumNumberOfLines = 0
+        chooserBannerStack.orientation = .vertical
+        chooserBannerStack.alignment = .centerX
+        chooserBannerStack.spacing = 4
+        chooserBannerStack.isHidden = true
+        chooserBannerStack.setViews([chooserBannerTitleLabel, chooserBannerDetailLabel, chooserBannerShortcutsLabel], in: .top)
+        searchTabHintLabel.isEditable = false
+        searchTabHintLabel.isBordered = false
+        searchTabHintLabel.drawsBackground = false
+        searchTabHintLabel.isHidden = true
+        searchTabHintLabel.alignment = .natural
+        searchTabHintLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        searchTabHintLabel.textColor = NSColor.secondaryLabelColor
+        searchTabHintLabel.lineBreakMode = .byTruncatingTail
     }
 
     private static func configureSearchField() {
@@ -339,6 +461,96 @@ class TilesView {
         if App.appIsBeingUsed {
             MainMenu.toggleEditMenu(editable)
         }
+        syncSearchFieldTabHintToolTip()
+    }
+
+    private static func syncSearchFieldTabHintToolTip() {
+        guard searchMode != .off, Preferences.windowHintsEnabled else {
+            searchField.toolTip = nil
+            searchTabHintLabel.isHidden = true
+            return
+        }
+        searchField.toolTip = NSLocalizedString("search.tabHintWithWindowHints", comment: "")
+        searchTabHintLabel.stringValue = searchFieldYieldsToHints
+            ? NSLocalizedString("search.tabTargetSearchField", comment: "")
+            : NSLocalizedString("search.tabTargetThumbnails", comment: "")
+        searchTabHintLabel.isHidden = false
+    }
+
+    private static func shortcutDisplayForBanner(_ shortcutId: String) -> String {
+        let display = Preferences.shortcutDisplayString(shortcutId).trimmingCharacters(in: .whitespaces)
+        guard display.count == 1, let c = display.first else { return display }
+        guard c.isLetter || c.isNumber else { return display }
+        return WindowHintLabels.circledGlyphString(for: String(c).lowercased())
+    }
+
+    private static func syncWindowHintsChromeBanners() {
+        guard Preferences.windowHintsEnabled else {
+            chooserBannerStack.isHidden = true
+            return
+        }
+        chooserBannerStack.isHidden = false
+        chooserBannerTitleLabel.stringValue = chooserLocalizedTitleForMode(chooserHintMode)
+        chooserBannerDetailLabel.stringValue = chooserLocalizedDetailForMode(chooserHintMode)
+        chooserBannerShortcutsLabel.stringValue = chooserShortcutsSummaryLine()
+    }
+
+    private static func chooserLocalizedTitleForMode(_ mode: ChooserHintMode) -> String {
+        switch mode {
+        case .normal: return NSLocalizedString("chooserMode.title.normal", comment: "")
+        case .focusHints: return NSLocalizedString("chooserMode.title.focusHints", comment: "")
+        case .minimizeHints: return NSLocalizedString("chooserMode.title.minimizeHints", comment: "")
+        case .closeHints: return NSLocalizedString("chooserMode.title.closeHints", comment: "")
+        case .quitHints: return NSLocalizedString("chooserMode.title.quitHints", comment: "")
+        case .fullscreenHints: return NSLocalizedString("chooserMode.title.fullscreenHints", comment: "")
+        case .hideHints: return NSLocalizedString("chooserMode.title.hideHints", comment: "")
+        }
+    }
+
+    private static func chooserLocalizedDetailForMode(_ mode: ChooserHintMode) -> String {
+        let escKey: String
+        if let v = LiteralKeyCodeTransformer.shared.transformedValue(NSNumber(value: kVK_Escape)) {
+            escKey = String(describing: v)
+        } else {
+            escKey = "Esc"
+        }
+        let dismissKey = shortcutDisplayForBanner("dismissSwitcherShortcut")
+        switch mode {
+        case .normal:
+            return String(format: NSLocalizedString("chooserMode.detail.normal", comment: ""), escKey, dismissKey)
+        case .focusHints:
+            return String(format: NSLocalizedString("chooserMode.detail.focusHints", comment: ""), escKey, dismissKey)
+        case .minimizeHints:
+            return String(format: NSLocalizedString("chooserMode.detail.minimizeHints", comment: ""), escKey, dismissKey)
+        case .closeHints:
+            return String(format: NSLocalizedString("chooserMode.detail.closeHints", comment: ""), escKey, dismissKey)
+        case .quitHints:
+            return String(format: NSLocalizedString("chooserMode.detail.quitHints", comment: ""), escKey, dismissKey)
+        case .fullscreenHints:
+            return String(format: NSLocalizedString("chooserMode.detail.fullscreenHints", comment: ""), escKey, dismissKey)
+        case .hideHints:
+            return String(format: NSLocalizedString("chooserMode.detail.hideHints", comment: ""), escKey, dismissKey)
+        }
+    }
+
+    private static func chooserShortcutsSummaryLine() -> String {
+        var seen = Set<String>()
+        var ids = [String]()
+        let holdId = Preferences.indexToName("holdShortcut", App.shortcutIndex)
+        let nextId = Preferences.indexToName("nextWindowShortcut", App.shortcutIndex)
+        for id in [holdId, nextId] + Preferences.staticShortcutKeys {
+            guard !seen.contains(id) else { continue }
+            seen.insert(id)
+            ids.append(id)
+        }
+        var parts = [String]()
+        for id in ids {
+            let d = Preferences.shortcutDisplayString(id).trimmingCharacters(in: .whitespaces)
+            guard !d.isEmpty else { continue }
+            if id.hasPrefix("vimCycle"), !Preferences.vimKeysEnabled { continue }
+            parts.append(d)
+        }
+        return parts.joined(separator: " · ")
     }
 
     static func updateCachedSizes() {
@@ -355,9 +567,11 @@ class TilesView {
         contentView = makeAppropriateEffectView()
         scrollView = ScrollView()
         searchField.isHidden = searchMode == .off
-        contentView.addSubview(searchField)
         contentView.addSubview(scrollView)
         contentView.addSubview(noWindowLabel)
+        contentView.addSubview(chooserBannerStack)
+        contentView.addSubview(searchField)
+        contentView.addSubview(searchTabHintLabel)
     }
 
     static func reset() {
@@ -491,8 +705,12 @@ class TilesView {
         scrollView.reflectScrolledClipView(scrollView.contentView)
     }
 
+    private static func hintBannerReservedHeight() -> CGFloat {
+        Preferences.windowHintsEnabled ? chooserBannerChromeHeight + hintBannerGap : 0
+    }
+
     private static func resolveAutoSize(_ widthMax: CGFloat) {
-        let searchReservedHeight: CGFloat = searchMode == .off ? 0 : searchBarHeight() + 10
+        let searchReservedHeight: CGFloat = (searchMode == .off ? 0 : searchBarHeight() + 10) + hintBannerReservedHeight()
         let heightMax = max(0, TilesPanel.maxThumbnailsHeight() - searchReservedHeight)
         for size in [AppearanceSizePreference.large, .medium, .small] {
             Appearance.applySize(size)
@@ -614,7 +832,9 @@ class TilesView {
     private static func layoutParentViews(_ maxX: CGFloat, _ widthMax: CGFloat, _ maxY: CGFloat, _ labelHeight: CGFloat) {
         let searchBarHeight = searchBarHeight()
         let searchBottomPadding = CGFloat(10)
-        let searchReservedHeight = searchMode == .off ? 0 : searchBarHeight + searchBottomPadding
+        let hintReserved = hintBannerReservedHeight()
+        let searchRowReserved = searchMode == .off ? 0 : searchBarHeight + searchBottomPadding
+        let searchReservedHeight = searchRowReserved + hintReserved
         let heightMax = max(0, TilesPanel.maxThumbnailsHeight() - searchReservedHeight)
         let minSearchWidth = min(widthMax, 320)
         let minWidth = min(widthMax, 320)
@@ -636,11 +856,35 @@ class TilesView {
         scrollView.frame.origin = CGPoint(x: originX, y: originY + appIconsBottomViewportPadding * 2)
         scrollView.contentView.frame.size = scrollView.frame.size
         searchField.isHidden = searchMode == .off
+        let showWindowHintsChrome = Preferences.windowHintsEnabled
         if searchMode != .off {
             let searchWidth = minSearchWidth
+            let labelMaxWidth = max(CGFloat(72), min(CGFloat(220), TilesView.thumbnailsWidth - searchWidth - searchTabHintGap - 8))
+            let rowContentWidth = searchWidth + searchTabHintGap + labelMaxWidth
+            let searchX = originX + (TilesView.thumbnailsWidth - rowContentWidth) * 0.5
+            let searchY = frameHeight - Appearance.windowPadding - searchBarHeight - hintReserved
             searchField.frame.size = NSSize(width: searchWidth, height: searchBarHeight)
-            let searchX = originX + (TilesView.thumbnailsWidth - searchWidth) * 0.5
-            searchField.frame.origin = CGPoint(x: searchX, y: frameHeight - Appearance.windowPadding - searchBarHeight)
+            searchField.frame.origin = CGPoint(x: searchX, y: searchY)
+            searchTabHintLabel.isHidden = !Preferences.windowHintsEnabled
+            searchTabHintLabel.frame = CGRect(x: searchX + searchWidth + searchTabHintGap, y: searchY, width: labelMaxWidth, height: searchBarHeight)
+        } else {
+            searchTabHintLabel.isHidden = true
+        }
+        if showWindowHintsChrome {
+            syncWindowHintsChromeBanners()
+            let bannerY: CGFloat
+            if searchMode == .off {
+                bannerY = frameHeight - Appearance.windowPadding - chooserBannerChromeHeight
+            } else {
+                let searchY = frameHeight - Appearance.windowPadding - searchBarHeight - hintReserved
+                bannerY = searchY + searchBarHeight + hintBannerGap
+            }
+            chooserBannerStack.frame = CGRect(x: originX, y: bannerY, width: TilesView.thumbnailsWidth, height: chooserBannerChromeHeight)
+        } else {
+            chooserBannerStack.isHidden = true
+        }
+        if searchMode != .off {
+            syncSearchFieldTabHintToolTip()
         }
         if App.shared.userInterfaceLayoutDirection == .rightToLeft {
             let croppedWidth = max(0, TilesView.thumbnailsWidth - maxX)
@@ -711,6 +955,8 @@ class TilesView {
         if let contentView { views.append(contentView as NSView) }
         views.append(searchField)
         views.append(noWindowLabel)
+        views.append(chooserBannerStack)
+        views.append(searchTabHintLabel)
         if let scrollView {
             views.append(scrollView)
             views.append(scrollView.contentView)

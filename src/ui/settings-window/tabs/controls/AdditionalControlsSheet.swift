@@ -5,10 +5,11 @@ class AdditionalControlsSheet: SheetWindow {
         let enableArrows = TableGroupView.Row(leftTitle: NSLocalizedString("Select windows using arrow keys", comment: ""),
             rightViews: [LabelAndControl.makeSwitch("arrowKeysEnabled", extraAction: ControlsTab.arrowKeysEnabledCallback)])
         let enableVimKeys = TableGroupView.Row(leftTitle: NSLocalizedString("Select windows using vim keys", comment: ""),
+            subTitle: NSLocalizedString("vimKeys.enableSubtitle", comment: ""),
             rightViews: [LabelAndControl.makeSwitch("vimKeysEnabled", extraAction: ControlsTab.vimKeysEnabledCallback)])
         let enableWindowHints = TableGroupView.Row(
             leftTitle: NSLocalizedString("Show window hints on thumbnails", comment: ""),
-            subTitle: NSLocalizedString("windowHints.explanation", comment: ""),
+            subTitle: NSLocalizedString("windowHints.explanationSettings", comment: ""),
             rightViews: [LabelAndControl.makeSwitch("windowHintsEnabled")])
         let enableMouse = TableGroupView.Row(leftTitle: NSLocalizedString("Select windows on mouse hover", comment: ""),
             rightViews: [LabelAndControl.makeSwitch("mouseHoverEnabled")])

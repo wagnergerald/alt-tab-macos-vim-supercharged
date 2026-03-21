@@ -1,4 +1,5 @@
 import Cocoa
+import Carbon.HIToolbox.Events
 import ShortcutRecorder
 
 class KeyboardEventsTestable {
@@ -13,9 +14,36 @@ class KeyboardEventsTestable {
 @discardableResult
 func handleKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?, _ keyCode: UInt32?, _ modifiers: NSEvent.ModifierFlags?, _ isARepeat: Bool, _ event: NSEvent? = nil) -> Bool {
     if let event, event.type == .keyDown, App.appIsBeingUsed, TilesPanel.shared.isKeyWindow,
+       !event.isARepeat {
+        let dismissAllowed = !Preferences.windowHintsEnabled || TilesView.windowHintMode
+        let dismissMatch = dismissAllowed && matchesActivePanelShortcut(event, "dismissSwitcherShortcut")
+        let quitMatch = matchesActivePanelShortcut(event, "quitAppShortcut")
+        if dismissMatch && quitMatch && activePanelShortcutsSameBinding("dismissSwitcherShortcut", "quitAppShortcut") {
+            if TilesView.windowHintMode {
+                App.hideUi()
+                return true
+            }
+            if let quitShortcut = ControlsTab.shortcuts["quitAppShortcut"] {
+                quitShortcut.executeAction(isARepeat)
+                return true
+            }
+        }
+        if dismissMatch {
+            App.hideUi()
+            return true
+        }
+    }
+    if let event, event.type == .keyDown, App.appIsBeingUsed, TilesPanel.shared.isKeyWindow,
+       !event.isARepeat {
+        if TilesView.tryEnterChooserHintModeFromEvent(event) {
+            return true
+        }
+    }
+    if let event, event.type == .keyDown, App.appIsBeingUsed, TilesPanel.shared.isKeyWindow,
        !event.isARepeat,
-       matchesActivePanelShortcut(event, "dismissSwitcherShortcut") {
-        App.hideUi()
+       event.keyCode == UInt16(kVK_Escape),
+       Preferences.windowHintsEnabled, TilesView.windowHintMode {
+        TilesView.exitWindowHintMode()
         return true
     }
     if let event, event.type == .keyDown, App.appIsBeingUsed, TilesPanel.shared.isKeyWindow,
@@ -51,6 +79,12 @@ private func logKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?,
         let keyCodeAsString = keyCode.flatMap { SymbolicKeyCodeTransformer.shared.transformedValue(NSNumber(value: $0)) }
         return "keys:\(modifiersAsString ?? "")\(keyCodeAsString ?? "") isARepeat:\(isARepeat)"
     }
+}
+
+private func activePanelShortcutsSameBinding(_ a: String, _ b: String) -> Bool {
+    guard let sa = Preferences.shortcut(a), let sb = Preferences.shortcut(b), sa.keyCode != .none, sb.keyCode != .none else { return false }
+    guard sa.carbonKeyCode == sb.carbonKeyCode else { return false }
+    return sa.carbonModifierFlags.cleaned() == sb.carbonModifierFlags.cleaned()
 }
 
 private func searchFieldBlocksWindowHints() -> Bool {
