@@ -21,6 +21,7 @@ class TilesView {
     static var noWindowLabel = NSTextField(labelWithString: NSLocalizedString("No Window", comment: ""))
     static var windowHintMode = false
     static var windowHintKeyBuffer = ""
+    static var searchFieldYieldsToHints = false
     private static var windowHintLabelAtIndex = [String]()
     private(set) static var searchMode: SearchMode = .off
     static var rows = [[TileView]]()
@@ -51,6 +52,7 @@ class TilesView {
     static func startSearchSession(_ startInSearchMode: Bool) {
         searchField.stringValue = ""
         Windows.updateSearchQuery("")
+        searchFieldYieldsToHints = false
         searchMode = startInSearchMode ? .editing : .off
         updateSearchFieldEditability()
     }
@@ -59,6 +61,7 @@ class TilesView {
         searchField.stringValue = ""
         Windows.updateSearchQuery("")
         TilesPanel.shared.resetFrozenPosition()
+        searchFieldYieldsToHints = false
         searchMode = .off
         updateSearchFieldEditability()
     }
@@ -183,6 +186,7 @@ class TilesView {
     static func disableSearchMode() {
         guard searchMode != .off else { return }
         TilesPanel.shared.resetFrozenPosition()
+        searchFieldYieldsToHints = false
         searchMode = .off
         updateSearchFieldEditability()
         searchField.stringValue = ""
@@ -194,6 +198,7 @@ class TilesView {
 
     static func lockSearchMode() {
         if searchMode == .editing {
+            searchFieldYieldsToHints = false
             searchMode = .locked
             updateSearchFieldEditability()
             focusSelectedTileIfPossible()
@@ -204,9 +209,11 @@ class TilesView {
 
     static func enableSearchEditing() {
         guard searchMode != .editing else {
+            searchFieldYieldsToHints = false
             placeSearchCaretAtEnd()
             return
         }
+        searchFieldYieldsToHints = false
         let wasOff = searchMode == .off
         searchMode = .editing
         updateSearchFieldEditability()
@@ -227,7 +234,17 @@ class TilesView {
         if keyCode == UInt16(kVK_RightArrow) { App.cycleSelection(.right); return .handled }
         if keyCode == UInt16(kVK_UpArrow) { App.cycleSelection(.up); return .handled }
         if keyCode == UInt16(kVK_DownArrow) { App.cycleSelection(.down); return .handled }
-        if keyCode == UInt16(kVK_Tab) { return .handled }
+        if keyCode == UInt16(kVK_Tab) {
+            if searchFieldYieldsToHints {
+                searchFieldYieldsToHints = false
+                TilesPanel.shared.makeFirstResponder(searchField)
+                placeSearchCaretAtEnd()
+                return .handled
+            }
+            searchFieldYieldsToHints = true
+            focusSelectedTileIfPossible()
+            return .handled
+        }
         if matchesShortcut(event, "cancelShortcut") ||
             matchesShortcut(event, "lockSearchShortcut") ||
             matchesShortcut(event, "focusWindowShortcut") { return .passToShortcuts }

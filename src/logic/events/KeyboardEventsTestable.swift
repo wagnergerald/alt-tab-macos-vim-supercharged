@@ -19,7 +19,7 @@ func handleKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?, _ ke
         return true
     }
     if let event, event.type == .keyDown, App.appIsBeingUsed, TilesPanel.shared.isKeyWindow,
-       !TilesView.isSearchEditing, !ContextMenuEvents.isMenuOpen,
+       !searchFieldBlocksWindowHints(), !ContextMenuEvents.isMenuOpen,
        Preferences.windowHintsEnabled, TilesView.windowHintMode {
         if TilesView.handleWindowHintKeyDown(event, isARepeat) {
             return true
@@ -51,6 +51,10 @@ private func logKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?,
         let keyCodeAsString = keyCode.flatMap { SymbolicKeyCodeTransformer.shared.transformedValue(NSNumber(value: $0)) }
         return "keys:\(modifiersAsString ?? "")\(keyCodeAsString ?? "") isARepeat:\(isARepeat)"
     }
+}
+
+private func searchFieldBlocksWindowHints() -> Bool {
+    TilesView.isSearchEditing && !TilesView.searchFieldYieldsToHints
 }
 
 private func matchesActivePanelShortcut(_ event: NSEvent, _ shortcutId: String) -> Bool {

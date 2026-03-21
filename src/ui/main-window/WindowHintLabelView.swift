@@ -32,7 +32,16 @@ class WindowHintLabelView: FlippedView {
     override var intrinsicContentSize: NSSize {
         guard !labelText.isEmpty else { return .zero }
         let size = attributedHint().size()
-        let pad = CGFloat(6)
-        return NSSize(width: ceil(size.width + pad * 2), height: ceil(size.height + pad * 2))
+        let padLeft: CGFloat
+        let padRight: CGFloat
+        if App.shared.userInterfaceLayoutDirection == .rightToLeft {
+            padLeft = 2
+            padRight = 4
+        } else {
+            padLeft = 4
+            padRight = 2
+        }
+        let padV = CGFloat(4)
+        return NSSize(width: ceil(size.width + padLeft + padRight), height: ceil(size.height + padV * 2))
     }
 }

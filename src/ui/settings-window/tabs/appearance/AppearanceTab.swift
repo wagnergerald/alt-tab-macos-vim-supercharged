@@ -393,6 +393,7 @@ class AppearanceTab: NSObject {
     static var customizeStyleSheet: CustomizeStyleSheet!
     static var animationsSheet: AnimationsSheet!
     static var previewSelectedWindowRowInfo: TableGroupView.RowInfo!
+    static var afterKeysReleasedRowInfo: TableGroupView.RowInfo!
 
     static func initTab() -> NSView {
         customizeStyleButton = NSButton(title: getCustomizeStyleButtonTitle(), target: self, action: #selector(showCustomizeStyleSheet))
@@ -429,8 +430,28 @@ class AppearanceTab: NSObject {
     }
 
     private static func addAfterKeysReleasedRow(_ table: TableGroupView) {
-        table.addRow(leftText: NSLocalizedString("After keys are released", comment: ""),
-            rightViews: [LabelAndControl.makeDropdown("shortcutStyle", ShortcutStylePreference.allCases)])
+        afterKeysReleasedRowInfo = table.addRow(leftText: NSLocalizedString("After keys are released", comment: ""),
+            rightViews: LabelAndControl.makeDropdown("shortcutStyle", ShortcutStylePreference.allCases))
+        updateAfterKeysReleasedRowState()
+    }
+
+    static func updateAfterKeysReleasedRowState() {
+        guard let rowInfo = afterKeysReleasedRowInfo else { return }
+        let locked = Preferences.windowHintsEnabled
+        rowInfo.leftViews?.forEach { view in
+            if let textField = view as? NSTextField {
+                textField.textColor = locked ? .secondaryLabelColor : .textColor
+            }
+        }
+        rowInfo.rightViews?.forEach { view in
+            if let popup = view as? NSPopUpButton {
+                popup.isEnabled = !locked
+                let idx = Preferences.shortcutStyle.index
+                if popup.indexOfSelectedItem != idx {
+                    popup.selectItem(at: idx)
+                }
+            }
+        }
     }
 
     private static func addPreviewSelectedWindowRow(_ table: TableGroupView) {

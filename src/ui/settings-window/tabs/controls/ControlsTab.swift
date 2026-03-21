@@ -213,9 +213,11 @@ class ControlsTab {
         case "vimKeysEnabled" where vimKeysCheckbox == nil:
             applyVimKeysPreferenceWithoutDialogs()
         case "windowHintsEnabled":
+            WindowHintsShortcutStyle.applyForWindowHintsPreferenceChange()
             if App.appIsBeingUsed {
                 TilesView.onWindowHintsPreferenceChanged()
             }
+            AppearanceTab.updateAfterKeysReleasedRowState()
         default:
             break
         }

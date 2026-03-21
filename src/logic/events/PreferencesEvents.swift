@@ -33,6 +33,7 @@ class PreferencesEvents {
         initialized = true
         UserDefaultsEvents.observe()
         ControlsTab.initializePreferencesDependentState()
+        WindowHintsShortcutStyle.enforceOnLaunchIfNeeded()
         applyMenubarPreferencesIfReady()
         applyUpdatePolicyPreference()
         TrackpadEvents.toggle(Preferences.nextWindowGesture != .disabled)

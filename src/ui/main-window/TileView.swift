@@ -412,34 +412,67 @@ class TileView: FlippedView {
         (text as NSString).size(withAttributes: attributes).width
     }
 
+    private func baseTitleRowLabelWidth() -> CGFloat {
+        let edgeInsets = Appearance.edgeInsetsSize
+        let hWidth = frame.width - edgeInsets * 2
+        return hWidth - appIcon.frame.width - Appearance.appIconLabelSpacing - statusIcons.totalWidth
+    }
+
+    private static let windowHintToTitleGap = CGFloat(0)
+
+    private func hintReserveWidthNextToAppIcon() -> CGFloat {
+        guard !windowHintBadge.isHidden, Preferences.windowHintsEnabled, TilesView.windowHintMode else { return 0 }
+        return windowHintBadge.frame.width + Self.windowHintToTitleGap
+    }
+
+    private func applyTitleRowLabelLayout() {
+        guard Preferences.appearanceStyle != .appIcons else { return }
+        let edgeInsets = Appearance.edgeInsetsSize
+        let hHeight = max(appIcon.frame.height, TilesView.layoutCache.labelHeight)
+        let reserve = hintReserveWidthNextToAppIcon()
+        let labelW = max(0, baseTitleRowLabelWidth() - reserve)
+        let labelX: CGFloat
+        let iconToHint = Appearance.appIconLabelSpacing
+        if App.shared.userInterfaceLayoutDirection == .leftToRight {
+            labelX = appIcon.frame.maxX + iconToHint + reserve
+        } else {
+            labelX = appIcon.frame.minX - iconToHint - reserve - labelW
+        }
+        assignIfDifferent(&label.frame.origin.x, labelX)
+        assignIfDifferent(&label.frame.origin.y, edgeInsets + ((hHeight - TilesView.layoutCache.labelHeight) / 2).rounded())
+        label.setWidth(labelW)
+    }
+
+    private func reflowTitleRowLabelForWindowHint() {
+        guard Preferences.appearanceStyle != .appIcons else { return }
+        applyTitleRowLabelLayout()
+        applySearchHighlight()
+    }
+
     private func updateSizes(_ newHeight: CGFloat) {
         setFrameWidthHeight(newHeight)
         if Preferences.appearanceStyle != .appIcons {
-            let hWidth = frame.width - Appearance.edgeInsetsSize * 2
-            let labelWidth = hWidth - appIcon.frame.width - Appearance.appIconLabelSpacing - statusIcons.totalWidth
-            label.setWidth(labelWidth)
+            label.setWidth(max(0, baseTitleRowLabelWidth() - hintReserveWidthNextToAppIcon()))
         }
     }
 
     private func updatePositions(_ newHeight: CGFloat) {
         let edgeInsets = Appearance.edgeInsetsSize
-        assignIfDifferent(&appIcon.frame.origin, NSPoint(x: edgeInsets, y: edgeInsets))
         if Preferences.appearanceStyle != .appIcons {
             let hWidth = frame.width - edgeInsets * 2
             let hHeight = max(appIcon.frame.height, TilesView.layoutCache.labelHeight)
-            if App.shared.userInterfaceLayoutDirection == .rightToLeft {
-                assignIfDifferent(&appIcon.frame.origin.x, edgeInsets + hWidth - appIcon.frame.width)
-            }
-            statusIcons.layoutIcons(hWidth: hWidth, hHeight: hHeight, edgeInsets: edgeInsets)
-            let labelWidth = hWidth - appIcon.frame.width - Appearance.appIconLabelSpacing - statusIcons.totalWidth
-            let labelX: CGFloat
+            let iconY = edgeInsets + ((hHeight - appIcon.frame.height) / 2).rounded()
+            let iconX: CGFloat
             if App.shared.userInterfaceLayoutDirection == .leftToRight {
-                labelX = appIcon.frame.maxX + Appearance.appIconLabelSpacing
+                iconX = edgeInsets
             } else {
-                labelX = edgeInsets + hWidth - appIcon.frame.width - Appearance.appIconLabelSpacing - labelWidth
+                iconX = edgeInsets + hWidth - appIcon.frame.width
             }
-            assignIfDifferent(&label.frame.origin.x, labelX)
-            assignIfDifferent(&label.frame.origin.y, edgeInsets + ((hHeight - TilesView.layoutCache.labelHeight) / 2).rounded())
+            assignIfDifferent(&appIcon.frame.origin, NSPoint(x: iconX, y: iconY))
+            statusIcons.layoutIcons(hWidth: hWidth, hHeight: hHeight, edgeInsets: edgeInsets)
+            applyTitleRowLabelLayout()
+        } else {
+            assignIfDifferent(&appIcon.frame.origin, NSPoint(x: edgeInsets, y: edgeInsets))
         }
         if Preferences.appearanceStyle == .thumbnails {
             let hHeight = max(appIcon.frame.height, TilesView.layoutCache.labelHeight)
@@ -454,32 +487,38 @@ class TileView: FlippedView {
     func updateWindowHintBadge(_ text: String?) {
         guard let text, !text.isEmpty else {
             assignIfDifferent(&windowHintBadge.isHidden, true)
+            reflowTitleRowLabelForWindowHint()
             return
         }
         windowHintBadge.isHidden = false
         windowHintBadge.setLabelText(text)
         windowHintBadge.setAccessibilityLabel("Window hint \(text)")
         windowHintBadge.setFrameSize(windowHintBadge.intrinsicContentSize)
+        reflowTitleRowLabelForWindowHint()
         updateWindowHintBadgePosition()
     }
 
     private func updateWindowHintBadgePosition() {
         guard !windowHintBadge.isHidden else { return }
         let edgeInsets = Appearance.edgeInsetsSize
-        let pad = max(2, edgeInsets * 0.35)
-        if Preferences.appearanceStyle == .thumbnails {
-            let x = thumbnail.frame.minX + pad
-            let y = thumbnail.frame.maxY - windowHintBadge.frame.height - pad
-            assignIfDifferent(&windowHintBadge.frame.origin, CGPoint(x: x, y: y))
-        } else if Preferences.appearanceStyle == .appIcons {
-            let x = appIcon.frame.minX + pad
-            let y = appIcon.frame.maxY - windowHintBadge.frame.height - pad
-            assignIfDifferent(&windowHintBadge.frame.origin, CGPoint(x: x, y: y))
+        let spacing = Appearance.appIconLabelSpacing
+        let hintW = windowHintBadge.frame.width
+        let hintH = windowHintBadge.frame.height
+        let y: CGFloat
+        if Preferences.appearanceStyle != .appIcons {
+            let hHeight = max(appIcon.frame.height, TilesView.layoutCache.labelHeight)
+            let rowMidY = edgeInsets + hHeight / 2
+            y = rowMidY - hintH / 2
         } else {
-            let x = edgeInsets + pad
-            let y = frame.height - windowHintBadge.frame.height - edgeInsets - pad
-            assignIfDifferent(&windowHintBadge.frame.origin, CGPoint(x: x, y: y))
+            y = appIcon.frame.midY - hintH / 2
         }
+        let x: CGFloat
+        if App.shared.userInterfaceLayoutDirection == .leftToRight {
+            x = appIcon.frame.maxX + spacing
+        } else {
+            x = appIcon.frame.minX - spacing - hintW
+        }
+        assignIfDifferent(&windowHintBadge.frame.origin, CGPoint(x: x, y: y))
     }
 
     private func updateDockLabelIconPosition() {

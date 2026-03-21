@@ -289,7 +289,7 @@
 "Window title contains" = "Window title contains";
 "Window title font size:" = "Window title font size:";
 "Window title truncation:" = "Window title truncation:";
-"windowHints.explanation" = "When enabled, each thumbnail shows a short shortcut (similar to link hints in a browser). Type the keys to switch to that window. Press Escape to use arrows, Tab, or vim keys instead. When search is locked, hints match the filtered list; while you are typing in the search field, hints are paused.";
+"windowHints.explanation" = "When enabled, each thumbnail shows a short shortcut (similar to link hints in a browser). Type the keys to switch to that window. Press Escape to use arrows, Tab, or vim keys instead. While the search field is focused, hints are paused; press Tab to move focus to the thumbnails and use hints, then Tab again to return to the search field. When search is locked, hints match the filtered list. Window hints require “After keys are released” to be “Keep open” while this option is on.";
 "Windows" = "Windows";
 "You can’t undo this action." = "You can’t undo this action.";
 "You didn’t write your email, thus can’t receive any response." = "You didn’t write your email, thus can’t receive any response.";
