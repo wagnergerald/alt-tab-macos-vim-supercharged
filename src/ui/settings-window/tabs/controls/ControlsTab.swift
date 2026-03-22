@@ -116,7 +116,13 @@ class ControlsTab {
     static var shortcuts = [String: ATShortcut]()
     static var shortcutControls = [String: (CustomRecorderControl, String)]()
     static var shortcutsActions = [
-        "focusWindowShortcut": { App.focusTarget() },
+        "focusWindowShortcut": {
+            if Preferences.windowHintsEnabled && TilesView.chooserHintMode == .normal {
+                App.focusTarget()
+                return
+            }
+            enterHintModeOrRun(.focusHints) { App.focusTarget() }
+        },
         "previousWindowShortcut": { App.previousWindowShortcutWithRepeatingKey() },
         "→": { App.cycleSelection(.right) },
         "←": { App.cycleSelection(.left) },
@@ -127,15 +133,30 @@ class ControlsTab {
         "vimCycleUp": { App.cycleSelection(.up) },
         "vimCycleDown": { App.cycleSelection(.down) },
         "cancelShortcut": { App.cancelSearchModeOrHideUi() },
-        "closeWindowShortcut": { App.closeSelectedWindow() },
-        "minDeminWindowShortcut": { App.minDeminSelectedWindow() },
-        "toggleFullscreenWindowShortcut": { App.toggleFullscreenSelectedWindow() },
-        "quitAppShortcut": { App.quitSelectedApp() },
-        "hideShowAppShortcut": { App.hideShowSelectedApp() },
+        "closeWindowShortcut": { enterHintModeOrRun(.closeHints) { App.closeSelectedWindow() } },
+        "minDeminWindowShortcut": { enterHintModeOrRun(.minimizeHints) { App.minDeminSelectedWindow() } },
+        "toggleFullscreenWindowShortcut": { enterHintModeOrRun(.fullscreenHints) { App.toggleFullscreenSelectedWindow() } },
+        "quitAppShortcut": { enterHintModeOrRun(.quitHints) { App.quitSelectedApp() } },
+        "hideShowAppShortcut": { enterHintModeOrRun(.hideHints) { App.hideShowSelectedApp() } },
         "searchShortcut": { App.toggleSearchMode() },
         "lockSearchShortcut": { App.lockSearchMode() },
-        "dismissSwitcherShortcut": { App.hideUi() },
+        "dismissSwitcherShortcut": {
+            guard !Preferences.windowHintsEnabled || TilesView.windowHintMode else { return }
+            App.hideUi()
+        },
     ]
+
+    private static func enterHintModeOrRun(_ mode: ChooserHintMode, _ run: () -> Void) {
+        guard Preferences.windowHintsEnabled else {
+            run()
+            return
+        }
+        if TilesView.chooserHintMode == mode {
+            return
+        }
+        TilesView.switchToHintMode(mode)
+    }
+
     static var arrowKeysCheckbox: Switch!
     static var vimKeysCheckbox: Switch!
 
@@ -962,7 +983,12 @@ class ControlsTab {
             return
         }
         if action.hasPrefix("nextWindowShortcut") {
-            App.showUiOrCycleSelection(Preferences.nameToIndex(action), false)
+            let idx = Preferences.nameToIndex(action)
+            if App.appIsBeingUsed, TilesPanel.shared.isKeyWindow, Preferences.windowHintsEnabled, TilesView.chooserHintMode == .normal, idx == App.shortcutIndex {
+                TilesView.enterHintModeFromOpenSwitcherShortcut()
+                return
+            }
+            App.showUiOrCycleSelection(idx, false)
         }
     }
 }
