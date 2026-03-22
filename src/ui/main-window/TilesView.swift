@@ -39,6 +39,7 @@ class TilesView {
     private static var chooserBannerTitleLabel = NSTextField(labelWithString: "")
     private static var chooserBannerDetailLabel = NSTextField(wrappingLabelWithString: "")
     private static var chooserBannerShortcutsLabel = NSTextField(wrappingLabelWithString: "")
+    private static var chooserBannerSettingsLabel = NSTextField(wrappingLabelWithString: "")
     private static var searchTabHintLabel = NSTextField(labelWithString: "")
     static var chooserHintMode: ChooserHintMode = .normal
     static var windowHintMode: Bool { chooserHintMode != .normal }
@@ -197,11 +198,6 @@ class TilesView {
         }
     }
 
-    static func enterHintModeFromOpenSwitcherShortcut() {
-        guard Preferences.windowHintsEnabled, chooserHintMode == .normal else { return }
-        switchToHintMode(.focusHints)
-    }
-
     static func switchToHintMode(_ mode: ChooserHintMode) {
         guard Preferences.windowHintsEnabled else { return }
         chooserHintMode = mode
@@ -225,7 +221,7 @@ class TilesView {
             ("hideShowAppShortcut", .hideHints),
         ]
         for (id, mode) in pairs {
-            if id == "focusWindowShortcut", chooserHintMode == .normal {
+            if id == "focusWindowShortcut" {
                 continue
             }
             guard matchesPanelShortcutForModeEntry(event, id) else { continue }
@@ -347,7 +343,8 @@ class TilesView {
         }
         if matchesShortcut(event, "cancelShortcut") ||
             matchesShortcut(event, "lockSearchShortcut") ||
-            matchesShortcut(event, "focusWindowShortcut") { return .passToShortcuts }
+            matchesShortcut(event, "focusWindowShortcut") ||
+            matchesShortcut(event, "openSettingsFromSwitcherShortcut") { return .passToShortcuts }
         return .passToField
     }
 
@@ -363,7 +360,7 @@ class TilesView {
         chooserBannerTitleLabel.isBordered = false
         chooserBannerTitleLabel.drawsBackground = false
         chooserBannerTitleLabel.alignment = .center
-        chooserBannerTitleLabel.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
+        chooserBannerTitleLabel.font = NSFont.systemFont(ofSize: 13, weight: .bold)
         chooserBannerTitleLabel.textColor = NSColor.labelColor
         chooserBannerDetailLabel.isEditable = false
         chooserBannerDetailLabel.isBordered = false
@@ -379,11 +376,18 @@ class TilesView {
         chooserBannerShortcutsLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
         chooserBannerShortcutsLabel.textColor = NSColor.secondaryLabelColor
         chooserBannerShortcutsLabel.maximumNumberOfLines = 0
+        chooserBannerSettingsLabel.isEditable = false
+        chooserBannerSettingsLabel.isBordered = false
+        chooserBannerSettingsLabel.drawsBackground = false
+        chooserBannerSettingsLabel.alignment = .center
+        chooserBannerSettingsLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
+        chooserBannerSettingsLabel.textColor = NSColor.secondaryLabelColor
+        chooserBannerSettingsLabel.maximumNumberOfLines = 0
         chooserBannerStack.orientation = .vertical
         chooserBannerStack.alignment = .centerX
         chooserBannerStack.spacing = 4
         chooserBannerStack.isHidden = true
-        chooserBannerStack.setViews([chooserBannerTitleLabel, chooserBannerDetailLabel, chooserBannerShortcutsLabel], in: .top)
+        chooserBannerStack.setViews([chooserBannerTitleLabel, chooserBannerDetailLabel, chooserBannerShortcutsLabel, chooserBannerSettingsLabel], in: .top)
         searchTabHintLabel.isEditable = false
         searchTabHintLabel.isBordered = false
         searchTabHintLabel.drawsBackground = false
@@ -499,8 +503,12 @@ class TilesView {
         return WindowHintLabels.circledGlyphString(for: String(c).lowercased())
     }
 
+    private static let chooserBannerSettingsRowHeight: CGFloat = 18
+
     private static func chooserBannerChromeHeightForLayout() -> CGFloat {
-        windowHintMode ? chooserBannerChromeHeightHint : chooserBannerChromeHeightNormal
+        let base = windowHintMode ? chooserBannerChromeHeightHint : chooserBannerChromeHeightNormal
+        guard Preferences.windowHintsEnabled, Preferences.shortcutStyle == .doNothingOnRelease else { return base }
+        return base + chooserBannerSettingsRowHeight
     }
 
     private static func hintBannerGapForLayout() -> CGFloat {
@@ -517,17 +525,13 @@ class TilesView {
         chooserBannerTitleLabel.stringValue = chooserLocalizedTitleForMode(chooserHintMode)
         chooserBannerDetailLabel.stringValue = chooserLocalizedDetailForMode(chooserHintMode)
         chooserBannerShortcutsLabel.stringValue = chooserModeSwitchShortcutsLine()
-    }
-
-    private static func openSwitcherShortcutDisplayForBanner() -> String {
-        let holdId = Preferences.indexToName("holdShortcut", App.shortcutIndex)
-        let nextId = Preferences.indexToName("nextWindowShortcut", App.shortcutIndex)
-        let h = Preferences.shortcutDisplayString(holdId).trimmingCharacters(in: .whitespaces)
-        let n = Preferences.shortcutDisplayString(nextId).trimmingCharacters(in: .whitespaces)
-        if h.isEmpty && n.isEmpty { return "—" }
-        if h.isEmpty { return n }
-        if n.isEmpty { return h }
-        return h + " + " + n
+        let showSettingsRow = Preferences.shortcutStyle == .doNothingOnRelease
+        chooserBannerSettingsLabel.isHidden = !showSettingsRow
+        if showSettingsRow {
+            let d = Preferences.shortcutDisplayString("openSettingsFromSwitcherShortcut").trimmingCharacters(in: .whitespaces)
+            let key = d.isEmpty ? "⌘," : d
+            chooserBannerSettingsLabel.stringValue = String(format: NSLocalizedString("chooserMode.settingsShortcutLine", comment: ""), key)
+        }
     }
 
     private static func chooserLocalizedTitleForMode(_ mode: ChooserHintMode) -> String {
@@ -551,30 +555,37 @@ class TilesView {
     }
 
     private static func chooserLocalizedDetailForMode(_ mode: ChooserHintMode) -> String {
+        let esc = escKeyDisplayForBanner()
         switch mode {
-        case .focusHints, .minimizeHints, .closeHints, .quitHints, .fullscreenHints, .hideHints:
-            let modeSwitch = String(format: NSLocalizedString("chooserMode.detail.hint.modeSwitch", comment: ""), escKeyDisplayForBanner())
-            return chooserHintModeLeadPhrase(mode) + modeSwitch
         case .normal:
-            return String(format: NSLocalizedString("chooserMode.detail.normal", comment: ""), escKeyDisplayForBanner(), shortcutDisplayForBanner("dismissSwitcherShortcut"), openSwitcherShortcutDisplayForBanner())
+            let hintEnter = Preferences.shortcutDisplayString("enterHintModeFromNormalShortcut").trimmingCharacters(in: .whitespaces)
+            let hintKey = hintEnter.isEmpty ? "—" : hintEnter
+            return String(format: NSLocalizedString("chooserMode.detail.subtitle.normal", comment: ""), hintKey, esc)
+        case .focusHints:
+            return String(format: NSLocalizedString("chooserMode.detail.subtitle.focusHints", comment: ""), esc)
+        case .minimizeHints:
+            return String(format: NSLocalizedString("chooserMode.detail.subtitle.minimizeHints", comment: ""), esc)
+        case .closeHints:
+            return String(format: NSLocalizedString("chooserMode.detail.subtitle.closeHints", comment: ""), esc)
+        case .quitHints:
+            return String(format: NSLocalizedString("chooserMode.detail.subtitle.quitHints", comment: ""), esc)
+        case .fullscreenHints:
+            return String(format: NSLocalizedString("chooserMode.detail.subtitle.fullscreenHints", comment: ""), esc)
+        case .hideHints:
+            return String(format: NSLocalizedString("chooserMode.detail.subtitle.hideHints", comment: ""), esc)
         }
     }
 
-    private static func chooserHintModeLeadPhrase(_ mode: ChooserHintMode) -> String {
-        switch mode {
-        case .normal: return ""
-        case .focusHints: return NSLocalizedString("chooserMode.detail.lead.focusHints", comment: "")
-        case .minimizeHints: return NSLocalizedString("chooserMode.detail.lead.minimizeHints", comment: "")
-        case .closeHints: return NSLocalizedString("chooserMode.detail.lead.closeHints", comment: "")
-        case .quitHints: return NSLocalizedString("chooserMode.detail.lead.quitHints", comment: "")
-        case .fullscreenHints: return NSLocalizedString("chooserMode.detail.lead.fullscreenHints", comment: "")
-        case .hideHints: return NSLocalizedString("chooserMode.detail.lead.hideHints", comment: "")
+    private static func chooserModeSwitchDescFocus() -> String {
+        if chooserHintMode == .normal {
+            return NSLocalizedString("chooserMode.modeSwitchDesc.focus", comment: "")
         }
+        return NSLocalizedString("chooserMode.modeSwitchDesc.focusWhenHintMode", comment: "")
     }
 
     private static func chooserModeSwitchShortcutsLine() -> String {
         let pairs: [(String, String)] = [
-            ("focusWindowShortcut", NSLocalizedString("chooserMode.modeSwitchDesc.focus", comment: "")),
+            ("focusWindowShortcut", chooserModeSwitchDescFocus()),
             ("minDeminWindowShortcut", NSLocalizedString("chooserMode.modeSwitchDesc.minimize", comment: "")),
             ("closeWindowShortcut", NSLocalizedString("chooserMode.modeSwitchDesc.close", comment: "")),
             ("quitAppShortcut", NSLocalizedString("chooserMode.modeSwitchDesc.quit", comment: "")),

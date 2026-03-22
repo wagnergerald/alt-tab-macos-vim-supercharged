@@ -163,6 +163,7 @@ class App: AppCenterApplication {
     }
 
     @objc static func showSettingsWindow() {
+        if appIsBeingUsed { hideUi() }
         initializeSettingsWindowIfNeeded()
         showSecondaryWindow(SettingsWindow.shared!)
         if SettingsWindow.shared!.isVisible != true {

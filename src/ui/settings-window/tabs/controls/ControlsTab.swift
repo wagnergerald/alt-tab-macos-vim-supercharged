@@ -115,14 +115,40 @@ private class ShortcutSidebarRow: ClickHoverStackView {
 class ControlsTab {
     static var shortcuts = [String: ATShortcut]()
     static var shortcutControls = [String: (CustomRecorderControl, String)]()
+
+    private static func runFocusShortcutActionForCurrentHintMode() {
+        switch TilesView.chooserHintMode {
+        case .normal, .focusHints:
+            App.focusTarget()
+        case .minimizeHints:
+            App.minDeminSelectedWindow()
+            App.refreshUi(true)
+        case .closeHints:
+            App.closeSelectedWindow()
+        case .quitHints:
+            App.quitSelectedApp()
+        case .fullscreenHints:
+            App.toggleFullscreenSelectedWindow()
+            App.refreshUi(true)
+        case .hideHints:
+            App.hideShowSelectedApp()
+            App.refreshUi(true)
+        }
+    }
+
     static var shortcutsActions = [
         "focusWindowShortcut": {
-            if Preferences.windowHintsEnabled && TilesView.chooserHintMode == .normal {
+            if !Preferences.windowHintsEnabled {
                 App.focusTarget()
                 return
             }
-            enterHintModeOrRun(.focusHints) { App.focusTarget() }
+            runFocusShortcutActionForCurrentHintMode()
         },
+        "enterHintModeFromNormalShortcut": {
+            guard Preferences.windowHintsEnabled, TilesView.chooserHintMode == .normal else { return }
+            TilesView.switchToHintMode(.focusHints)
+        },
+        "openSettingsFromSwitcherShortcut": { App.showSettingsWindow() },
         "previousWindowShortcut": { App.previousWindowShortcutWithRepeatingKey() },
         "→": { App.cycleSelection(.right) },
         "←": { App.cycleSelection(.left) },
@@ -174,6 +200,7 @@ class ControlsTab {
     private static let staticManagedShortcutPreferences = [
         "focusWindowShortcut", "previousWindowShortcut", "cancelShortcut", "searchShortcut", "lockSearchShortcut",
         "closeWindowShortcut", "minDeminWindowShortcut", "toggleFullscreenWindowShortcut", "dismissSwitcherShortcut", "quitAppShortcut", "hideShowAppShortcut",
+        "enterHintModeFromNormalShortcut", "openSettingsFromSwitcherShortcut",
         "vimCycleLeft", "vimCycleRight", "vimCycleUp", "vimCycleDown",
     ]
     private static let removableShortcutPreferences = [
@@ -225,7 +252,16 @@ class ControlsTab {
             refreshShortcutRows()
         case let k where staticManagedShortcutPreferences.contains(k):
             applyShortcutPreference(k)
-            if k == "dismissSwitcherShortcut" || k == "quitAppShortcut" || k == "cancelShortcut" {
+            let keysRefreshingChooserBanner = Set([
+                "dismissSwitcherShortcut", "quitAppShortcut", "cancelShortcut", "enterHintModeFromNormalShortcut", "openSettingsFromSwitcherShortcut",
+                "focusWindowShortcut", "minDeminWindowShortcut", "closeWindowShortcut", "toggleFullscreenWindowShortcut", "hideShowAppShortcut",
+            ])
+            if keysRefreshingChooserBanner.contains(k) {
+                TilesView.onWindowHintsShortcutDisplayChanged()
+            }
+        case "shortcutStyle":
+            applyShortcutPreference("openSettingsFromSwitcherShortcut")
+            if App.appIsBeingUsed {
                 TilesView.onWindowHintsShortcutDisplayChanged()
             }
         case "arrowKeysEnabled":
@@ -762,6 +798,10 @@ class ControlsTab {
                 applyShortcutPreference(controlId)
                 return
             }
+            if controlId == "openSettingsFromSwitcherShortcut" {
+                applyShortcutPreference(controlId)
+                return
+            }
             let newShortcut = combineHoldAndNextWindow(controlId, sender)
             if newShortcut == nil {
                 removeShortcutIfExists(controlId)
@@ -907,6 +947,21 @@ class ControlsTab {
             addShortcut(.down, .local, shortcut, controlId, nil)
             return
         }
+        if controlId == "openSettingsFromSwitcherShortcut" {
+            guard Preferences.shortcutStyle == .doNothingOnRelease else {
+                removeShortcutIfExists(controlId)
+                restrictModifiersOfHoldShortcut(controlId, [])
+                return
+            }
+            guard let shortcut = Preferences.shortcut(controlId) else {
+                removeShortcutIfExists(controlId)
+                restrictModifiersOfHoldShortcut(controlId, [])
+                return
+            }
+            addShortcut(.down, .local, shortcut, controlId, nil)
+            restrictModifiersOfHoldShortcut(controlId, [shortcut.modifierFlags])
+            return
+        }
         guard let shortcut = combinedShortcut(controlId) else {
             removeShortcutIfExists(controlId)
             restrictModifiersOfHoldShortcut(controlId, [])
@@ -983,12 +1038,7 @@ class ControlsTab {
             return
         }
         if action.hasPrefix("nextWindowShortcut") {
-            let idx = Preferences.nameToIndex(action)
-            if App.appIsBeingUsed, TilesPanel.shared.isKeyWindow, Preferences.windowHintsEnabled, TilesView.chooserHintMode == .normal, idx == App.shortcutIndex {
-                TilesView.enterHintModeFromOpenSwitcherShortcut()
-                return
-            }
-            App.showUiOrCycleSelection(idx, false)
+            App.showUiOrCycleSelection(Preferences.nameToIndex(action), false)
         }
     }
 }

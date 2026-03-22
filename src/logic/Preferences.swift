@@ -11,13 +11,15 @@ class Preferences {
             "previousWindowShortcut": defaultShortcut("⇧"),
             "cancelShortcut": defaultShortcut("⎋"),
             "lockSearchShortcut": defaultShortcut("Space"),
-            "closeWindowShortcut": defaultShortcut("W"),
-            "minDeminWindowShortcut": defaultShortcut("M"),
-            "toggleFullscreenWindowShortcut": defaultShortcut("F"),
-            "quitAppShortcut": defaultShortcut("⌘Q"),
-            "hideShowAppShortcut": defaultShortcut("H"),
+            "closeWindowShortcut": defaultShortcut("⌃C"),
+            "minDeminWindowShortcut": defaultShortcut("⌃M"),
+            "toggleFullscreenWindowShortcut": defaultShortcut("⌃F"),
+            "quitAppShortcut": defaultShortcut("⌃W"),
+            "hideShowAppShortcut": defaultShortcut("⌃H"),
             "searchShortcut": defaultShortcut("S"),
             "dismissSwitcherShortcut": defaultShortcut("Q"),
+            "enterHintModeFromNormalShortcut": defaultShortcut("⌃K"),
+            "openSettingsFromSwitcherShortcut": defaultShortcut("⌘,"),
             "vimCycleLeft": defaultShortcut("h"),
             "vimCycleRight": defaultShortcut("l"),
             "vimCycleUp": defaultShortcut("k"),
@@ -81,7 +83,7 @@ class Preferences {
     static let staticShortcutKeys = [
         "focusWindowShortcut", "previousWindowShortcut", "cancelShortcut", "lockSearchShortcut", "closeWindowShortcut",
         "minDeminWindowShortcut", "toggleFullscreenWindowShortcut", "quitAppShortcut", "hideShowAppShortcut", "searchShortcut",
-        "dismissSwitcherShortcut",
+        "dismissSwitcherShortcut", "enterHintModeFromNormalShortcut", "openSettingsFromSwitcherShortcut",
         "vimCycleLeft", "vimCycleRight", "vimCycleUp", "vimCycleDown",
     ]
     static var allShortcutPreferenceKeys: [String] {
@@ -106,6 +108,8 @@ class Preferences {
     static var hideShowAppShortcut: Shortcut? { CachedUserDefaults.shortcut("hideShowAppShortcut") }
     static var searchShortcut: Shortcut? { CachedUserDefaults.shortcut("searchShortcut") }
     static var dismissSwitcherShortcut: Shortcut? { CachedUserDefaults.shortcut("dismissSwitcherShortcut") }
+    static var enterHintModeFromNormalShortcut: Shortcut? { CachedUserDefaults.shortcut("enterHintModeFromNormalShortcut") }
+    static var openSettingsFromSwitcherShortcut: Shortcut? { CachedUserDefaults.shortcut("openSettingsFromSwitcherShortcut") }
     // periphery:ignore
     static var arrowKeysEnabled: Bool { CachedUserDefaults.bool("arrowKeysEnabled") }
     // periphery:ignore
