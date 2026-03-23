@@ -42,9 +42,9 @@ class ShortcutsWhenActiveSheet: SheetWindow {
             rightViews: [LabelAndControl.makeLabelWithRecorder(NSLocalizedString("Select previous window", comment: ""), "previousWindowShortcut", Preferences.previousWindowShortcut, labelPosition: .right)[0]])
         let cancelShortcut = TableGroupView.Row(leftTitle: NSLocalizedString("Cancel", comment: ""),
             rightViews: [LabelAndControl.makeLabelWithRecorder(NSLocalizedString("Cancel", comment: ""), "cancelShortcut", Preferences.cancelShortcut, labelPosition: .right)[0]])
-        let enterHintModeFromNormalShortcut = TableGroupView.Row(leftTitle: NSLocalizedString("Enter hint mode", comment: ""),
+        let enterHintModeFromNormalShortcut = TableGroupView.Row(leftTitle: NSLocalizedString("shortcutsWhenActive.enterHintModeFromNormalTitle", comment: ""),
             subTitle: NSLocalizedString("shortcutsWhenActive.enterHintModeFromNormalSubtitle", comment: ""),
-            rightViews: [LabelAndControl.makeLabelWithRecorder(NSLocalizedString("Enter hint mode", comment: ""), "enterHintModeFromNormalShortcut", Preferences.enterHintModeFromNormalShortcut, labelPosition: .right)[0]])
+            rightViews: [LabelAndControl.makeLabelWithRecorder(NSLocalizedString("shortcutsWhenActive.enterHintModeFromNormalTitle", comment: ""), "enterHintModeFromNormalShortcut", Preferences.enterHintModeFromNormalShortcut, labelPosition: .right)[0]])
         let dismissSwitcherShortcut = TableGroupView.Row(leftTitle: NSLocalizedString("Close the switcher immediately", comment: ""),
             subTitle: NSLocalizedString("shortcutsWhenActive.dismissSwitcherSubtitle", comment: ""),
             leftTitleBold: true,

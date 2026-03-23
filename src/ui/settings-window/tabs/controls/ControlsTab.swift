@@ -145,8 +145,13 @@ class ControlsTab {
             runFocusShortcutActionForCurrentHintMode()
         },
         "enterHintModeFromNormalShortcut": {
-            guard Preferences.windowHintsEnabled, TilesView.chooserHintMode == .normal else { return }
-            TilesView.switchToHintMode(.focusHints)
+            guard Preferences.windowHintsEnabled else { return }
+            switch TilesView.chooserHintMode {
+            case .normal, .minimizeHints, .closeHints, .quitHints, .hideHints:
+                TilesView.switchToHintMode(.focusHints)
+            default:
+                break
+            }
         },
         "openSettingsFromSwitcherShortcut": { App.showSettingsWindow() },
         "previousWindowShortcut": { App.previousWindowShortcutWithRepeatingKey() },
@@ -266,6 +271,9 @@ class ControlsTab {
             }
         case "arrowKeysEnabled":
             applyArrowKeysPreference()
+            if App.appIsBeingUsed {
+                TilesView.onWindowHintsShortcutDisplayChanged()
+            }
         case "vimKeysEnabled" where vimKeysCheckbox == nil:
             applyVimKeysPreferenceWithoutDialogs()
         case "windowHintsEnabled":
