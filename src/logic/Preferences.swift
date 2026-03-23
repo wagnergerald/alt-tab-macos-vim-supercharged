@@ -7,16 +7,16 @@ class Preferences {
         var values: [String: Any] = [
             "shortcutCount": "2",
             "nextWindowGesture": GesturePreference.disabled.indexAsString,
-            "focusWindowShortcut": defaultShortcut(returnKeyEquivalent()),
+            "focusWindowShortcut": defaultShortcut("Space"),
             "previousWindowShortcut": defaultShortcut("⇧"),
             "cancelShortcut": defaultShortcut("⎋"),
-            "lockSearchShortcut": defaultShortcut("Space"),
+            "lockSearchShortcut": shortcutStorage(nil, ""),
             "closeWindowShortcut": defaultShortcut("⌃C"),
             "minDeminWindowShortcut": defaultShortcut("⌃M"),
             "toggleFullscreenWindowShortcut": defaultShortcut("⌃F"),
-            "quitAppShortcut": defaultShortcut("⌃W"),
+            "quitAppShortcut": defaultShortcut("⌃Q"),
             "hideShowAppShortcut": defaultShortcut("⌃H"),
-            "searchShortcut": defaultShortcut("S"),
+            "searchShortcut": defaultShortcut("/"),
             "dismissSwitcherShortcut": defaultShortcut("Q"),
             "enterHintModeFromNormalShortcut": defaultShortcut("⌃K"),
             "openSettingsFromSwitcherShortcut": defaultShortcut("⌘,"),
@@ -25,8 +25,8 @@ class Preferences {
             "vimCycleUp": defaultShortcut("k"),
             "vimCycleDown": defaultShortcut("j"),
             "arrowKeysEnabled": "true",
-            "vimKeysEnabled": "false",
-            "windowHintsEnabled": "false",
+            "vimKeysEnabled": "true",
+            "windowHintsEnabled": "true",
             "mouseHoverEnabled": "false",
             "cursorFollowFocus": CursorFollowFocus.never.indexAsString,
             "showTabsAsWindows": "false",
@@ -36,8 +36,8 @@ class Preferences {
             "appearanceSize": AppearanceSizePreference.auto.indexAsString,
             "appearanceTheme": AppearanceThemePreference.system.indexAsString,
             "theme": ThemePreference.macOs.indexAsString,
-            "showOnScreen": ShowOnScreenPreference.active.indexAsString,
-            "titleTruncation": TitleTruncationPreference.end.indexAsString,
+            "showOnScreen": ShowOnScreenPreference.includingMenubar.indexAsString,
+            "titleTruncation": TitleTruncationPreference.middle.indexAsString,
             "alignThumbnails": AlignThumbnailsPreference.center.indexAsString,
             "showAppsOrWindows": ShowAppsOrWindowsPreference.windows.indexAsString,
             "showTitles": ShowTitlesPreference.windowTitle.indexAsString,
@@ -61,19 +61,19 @@ class Preferences {
             "settingsWindowShownOnFirstLaunch": "false",
         ]
         (0..<maxShortcutCount).forEach { index in
-            values[indexToName("holdShortcut", index)] = defaultShortcut("⌥")
+            values[indexToName("holdShortcut", index)] = defaultShortcut("⌘")
             values[indexToName("nextWindowShortcut", index)] = defaultShortcut(index == 0 ? "⇥" : (index == 1 ? keyAboveTabDependingOnInputSource() : ""))
         }
         (0...maxShortcutCount).forEach { index in
             values[indexToName("appsToShow", index)] = index == 1 ? AppsToShowPreference.active.indexAsString : (index == 2 ? AppsToShowPreference.nonActive.indexAsString : AppsToShowPreference.all.indexAsString)
-            values[indexToName("spacesToShow", index)] = SpacesToShowPreference.all.indexAsString
+            values[indexToName("spacesToShow", index)] = ([0, 1, 9].contains(index) ? SpacesToShowPreference.visible : SpacesToShowPreference.all).indexAsString
             values[indexToName("screensToShow", index)] = ScreensToShowPreference.all.indexAsString
             values[indexToName("showMinimizedWindows", index)] = ShowHowPreference.show.indexAsString
             values[indexToName("showHiddenWindows", index)] = ShowHowPreference.show.indexAsString
             values[indexToName("showFullscreenWindows", index)] = ShowHowPreference.show.indexAsString
-            values[indexToName("showWindowlessApps", index)] = ShowHowPreference.showAtTheEnd.indexAsString
+            values[indexToName("showWindowlessApps", index)] = (index == 0 ? ShowHowPreference.show : ShowHowPreference.showAtTheEnd).indexAsString
             values[indexToName("windowOrder", index)] = WindowOrderPreference.recentlyFocused.indexAsString
-            values[indexToName("shortcutStyle", index)] = ShortcutStylePreference.focusOnRelease.indexAsString
+            values[indexToName("shortcutStyle", index)] = ShortcutStylePreference.doNothingOnRelease.indexAsString
         }
         return values
     }()
