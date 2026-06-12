@@ -134,6 +134,7 @@ class CustomRecorderControlTestable {
     static func isAlreadyUsedByAnotherShortcut(_ newCombos: [(String, Shortcut)], _ oldCombos: [(String, Shortcut)], _ currentCombos: [(String, Shortcut)]) -> String? {
         for newCombo in newCombos {
             for oldCombo in oldCombos where newCombo.0 != oldCombo.0 {
+                if dismissSwitcherAndQuitAppPair(newCombo.0, oldCombo.0) { continue }
                 guard chordsCollide(newCombo.1, oldCombo.1) else { continue }
                 // The 2 already collided before the edit, so the edit doesn't introduce that collision.
                 // Reporting it blocks an unrelated change, naming a shortcut the user isn't editing and
@@ -144,6 +145,12 @@ class CustomRecorderControlTestable {
             }
         }
         return nil
+    }
+
+    /// Same bare key may bind dismiss-switcher (hint mode only) and quit-app (normal navigation).
+    private static func dismissSwitcherAndQuitAppPair(_ idA: String, _ idB: String) -> Bool {
+        let pair: Set = [idA, idB]
+        return pair == ["dismissSwitcherShortcut", "quitAppShortcut"]
     }
 
     /// 2 chords can't coexist when they are the same key+modifiers, or when both are modifiers-only
