@@ -12,6 +12,8 @@ ENABLE_DEBUG_DYLIB = NO // skip the debug dylib loader (we don't use SwiftUI Pre
 PRODUCT_BUNDLE_IDENTIFIER = com.lwouis.alt-tab-macos.dev
 PRODUCT_NAME = AltTabDev
 INFOPLIST_KEY_CFBundleDisplayName = "AltTab Dev"
+CURRENT_PROJECT_VERSION = 11.3.0-dev
+INFOPLIST_KEY_AltTabBuildDate = $(shell /bin/date "+%Y-%m-%d %H:%M")
 
 // Per-developer overrides (CODE_SIGN_IDENTITY, APPCENTER_SECRET, DOMAIN, API_DOMAIN, …).
 #include? "local.xcconfig"

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-APP_BUNDLE="${FULL_PRODUCT_NAME:-${PRODUCT_NAME}.app}"
+APP_BUNDLE="${FULL_PRODUCT_NAME:-${PRODUCT_NAME:-AltTabDev}.app}"
 PLIST="${BUILT_PRODUCTS_DIR}/${APP_BUNDLE}/Contents/Info.plist"
 if [ ! -f "$PLIST" ]; then
   echo "warning: Info.plist not found at $PLIST (PRODUCT_NAME=${PRODUCT_NAME:-})"
