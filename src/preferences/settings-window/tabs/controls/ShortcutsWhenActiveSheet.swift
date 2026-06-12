@@ -14,48 +14,81 @@ class ShortcutsWhenActiveSheet: SheetWindow {
     private static let labelFullscreen = ControlsTab.staticShortcutLabels["toggleFullscreenWindowShortcut"]!
     private static let labelQuit = ControlsTab.staticShortcutLabels["quitAppShortcut"]!
     private static let labelHideShow = ControlsTab.staticShortcutLabels["hideShowAppShortcut"]!
+    private static let labelEnterHintMode = ControlsTab.staticShortcutLabels["enterHintModeFromNormalShortcut"]!
+    private static let labelOpenSettings = ControlsTab.staticShortcutLabels["openSettingsFromSwitcherShortcut"]!
+    private static let labelDismiss = ControlsTab.staticShortcutLabels["dismissSwitcherShortcut"]!
+    private static let labelVimLeft = ControlsTab.staticShortcutLabels["vimCycleLeft"]!
+    private static let labelVimRight = ControlsTab.staticShortcutLabels["vimCycleRight"]!
+    private static let labelVimUp = ControlsTab.staticShortcutLabels["vimCycleUp"]!
+    private static let labelVimDown = ControlsTab.staticShortcutLabels["vimCycleDown"]!
 
     /// Pre-build search index for the open-button. See `SettingsSearchIndex.sheetSearchableStrings`.
     /// `ProBadgeView.proLabel` contributes the "Pro" tag rendered on the search row.
     static let searchableStrings: [String] = [
         title,
-        labelFocus, labelPrevious, labelCancel,
+        labelFocus, labelPrevious, labelCancel, labelEnterHintMode, labelOpenSettings,
         labelSearch, labelSearchHint,
         labelClose, labelMinDemin, labelFullscreen, labelQuit, labelHideShow,
+        labelVimLeft, labelVimRight, labelVimUp, labelVimDown,
+        labelDismiss,
         ProBadgeView.proLabel,
     ]
 
     override func makeContentView() -> NSView {
         let focusWindowShortcut = TableGroupView.Row(leftTitle: Self.labelFocus,
+            subTitle: NSLocalizedString("shortcutsWhenActive.focusWindowSubtitle", comment: ""),
             rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelFocus, "focusWindowShortcut", Preferences.focusWindowShortcut, labelPosition: .right)[0]])
         let previousWindowShortcut = TableGroupView.Row(leftTitle: Self.labelPrevious,
             rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelPrevious, "previousWindowShortcut", Preferences.previousWindowShortcut, labelPosition: .right)[0]])
         let cancelShortcut = TableGroupView.Row(leftTitle: Self.labelCancel,
             rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelCancel, "cancelShortcut", Preferences.cancelShortcut, labelPosition: .right)[0]])
-        let closeWindowShortcut = TableGroupView.Row(leftTitle: Self.labelClose,
-            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelClose, "closeWindowShortcut", Preferences.closeWindowShortcut, labelPosition: .right)[0]])
-        let minDeminWindowShortcut = TableGroupView.Row(leftTitle: Self.labelMinDemin,
-            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelMinDemin, "minDeminWindowShortcut", Preferences.minDeminWindowShortcut, labelPosition: .right)[0]])
-        let toggleFullscreenWindowShortcut = TableGroupView.Row(leftTitle: Self.labelFullscreen,
-            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelFullscreen, "toggleFullscreenWindowShortcut", Preferences.toggleFullscreenWindowShortcut, labelPosition: .right)[0]])
-        let quitAppShortcut = TableGroupView.Row(leftTitle: Self.labelQuit,
-            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelQuit, "quitAppShortcut", Preferences.quitAppShortcut, labelPosition: .right)[0]])
-        let hideShowAppShortcut = TableGroupView.Row(leftTitle: Self.labelHideShow,
-            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelHideShow, "hideShowAppShortcut", Preferences.hideShowAppShortcut, labelPosition: .right)[0]])
-        let table = TableGroupView(title: Self.title, width: SheetWindow.width)
+        let enterHintModeFromNormalShortcut = TableGroupView.Row(leftTitle: Self.labelEnterHintMode,
+            subTitle: NSLocalizedString("shortcutsWhenActive.enterHintModeFromNormalSubtitle", comment: ""),
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelEnterHintMode, "enterHintModeFromNormalShortcut", Preferences.enterHintModeFromNormalShortcut, labelPosition: .right)[0]])
+        let openSettingsFromSwitcherShortcut = TableGroupView.Row(leftTitle: Self.labelOpenSettings,
+            subTitle: NSLocalizedString("shortcutsWhenActive.openSettingsFromSwitcherSubtitle", comment: ""),
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelOpenSettings, "openSettingsFromSwitcherShortcut", Preferences.openSettingsFromSwitcherShortcut, labelPosition: .right)[0]])
+        let dismissSwitcherShortcut = TableGroupView.Row(leftTitle: Self.labelDismiss,
+            subTitle: NSLocalizedString("shortcutsWhenActive.dismissSwitcherSubtitle", comment: ""),
+            leftTitleBold: true,
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelDismiss, "dismissSwitcherShortcut", Preferences.dismissSwitcherShortcut, labelPosition: .right)[0]])
+        let table = TableGroupView(title: Self.title,
+            subTitle: NSLocalizedString("shortcutsWhenActive.tableSubtitle", comment: ""),
+            width: SheetWindow.width)
         _ = table.addRow(focusWindowShortcut)
         _ = table.addRow(previousWindowShortcut)
         _ = table.addRow(cancelShortcut)
+        _ = table.addRow(enterHintModeFromNormalShortcut)
+        _ = table.addRow(openSettingsFromSwitcherShortcut)
         let searchRow = table.addRow(leftText: Self.labelSearch,
             rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelSearch, "searchShortcut", Preferences.searchShortcut, labelPosition: .right)[0]])
         addProBadgeToLeftLabel(searchRow)
         table.addRow(leftText: Self.labelSearchHint, rightViews: [LabelAndControl.makeSwitch("showSearchHint")])
-        _ = table.addRow(closeWindowShortcut)
-        _ = table.addRow(minDeminWindowShortcut)
-        _ = table.addRow(toggleFullscreenWindowShortcut)
-        _ = table.addRow(quitAppShortcut)
-        _ = table.addRow(hideShowAppShortcut)
-        return table
+        _ = table.addRow(TableGroupView.Row(leftTitle: Self.labelVimLeft,
+            subTitle: NSLocalizedString("vimNavigation.subtitle", comment: ""),
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelVimLeft, "vimCycleLeft", Preferences.shortcut("vimCycleLeft"), labelPosition: .right)[0]]))
+        _ = table.addRow(TableGroupView.Row(leftTitle: Self.labelVimRight,
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelVimRight, "vimCycleRight", Preferences.shortcut("vimCycleRight"), labelPosition: .right)[0]]))
+        _ = table.addRow(TableGroupView.Row(leftTitle: Self.labelVimUp,
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelVimUp, "vimCycleUp", Preferences.shortcut("vimCycleUp"), labelPosition: .right)[0]]))
+        _ = table.addRow(TableGroupView.Row(leftTitle: Self.labelVimDown,
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelVimDown, "vimCycleDown", Preferences.shortcut("vimCycleDown"), labelPosition: .right)[0]]))
+        _ = table.addRow(TableGroupView.Row(leftTitle: Self.labelClose,
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelClose, "closeWindowShortcut", Preferences.closeWindowShortcut, labelPosition: .right)[0]]))
+        _ = table.addRow(TableGroupView.Row(leftTitle: Self.labelMinDemin,
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelMinDemin, "minDeminWindowShortcut", Preferences.minDeminWindowShortcut, labelPosition: .right)[0]]))
+        _ = table.addRow(TableGroupView.Row(leftTitle: Self.labelFullscreen,
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelFullscreen, "toggleFullscreenWindowShortcut", Preferences.toggleFullscreenWindowShortcut, labelPosition: .right)[0]]))
+        _ = table.addRow(TableGroupView.Row(leftTitle: Self.labelQuit,
+            subTitle: NSLocalizedString("shortcutsWhenActive.quitAppSubtitle", comment: ""),
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelQuit, "quitAppShortcut", Preferences.quitAppShortcut, labelPosition: .right)[0]]))
+        _ = table.addRow(TableGroupView.Row(leftTitle: Self.labelHideShow,
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelHideShow, "hideShowAppShortcut", Preferences.hideShowAppShortcut, labelPosition: .right)[0]]))
+        let dismissTable = TableGroupView(title: NSLocalizedString("shortcutsWhenActive.dismissSwitcherSectionTitle", comment: ""),
+            subTitle: NSLocalizedString("shortcutsWhenActive.dismissSwitcherSectionSubtitle", comment: ""),
+            width: SheetWindow.width)
+        _ = dismissTable.addRow(dismissSwitcherShortcut)
+        return TableGroupSetView(originalViews: [table, dismissTable], padding: 0)
     }
 
     private func addProBadgeToLeftLabel(_ rowInfo: TableGroupView.RowInfo) {

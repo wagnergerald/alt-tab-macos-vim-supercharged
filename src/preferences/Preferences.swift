@@ -7,18 +7,26 @@ class Preferences {
         var values: [String: Any] = [
             "shortcutCount": "2",
             "nextWindowGesture": GesturePreference.disabled.indexAsString,
-            "focusWindowShortcut": defaultShortcut(returnKeyEquivalent()),
+            "focusWindowShortcut": defaultShortcut("Space"),
             "previousWindowShortcut": defaultShortcut("⇧"),
             "cancelShortcut": defaultShortcut("⎋"),
-            "closeWindowShortcut": defaultShortcut("W"),
-            "minDeminWindowShortcut": defaultShortcut("M"),
-            "toggleFullscreenWindowShortcut": defaultShortcut("F"),
-            "quitAppShortcut": defaultShortcut("Q"),
-            "hideShowAppShortcut": defaultShortcut("H"),
-            "searchShortcut": defaultShortcut("S"),
+            "closeWindowShortcut": defaultShortcut("⌃C"),
+            "minDeminWindowShortcut": defaultShortcut("⌃M"),
+            "toggleFullscreenWindowShortcut": defaultShortcut("⌃F"),
+            "quitAppShortcut": defaultShortcut("⌃Q"),
+            "hideShowAppShortcut": defaultShortcut("⌃H"),
+            "searchShortcut": defaultShortcut("/"),
             "showSearchHint": "true",
+            "dismissSwitcherShortcut": defaultShortcut("Q"),
+            "enterHintModeFromNormalShortcut": defaultShortcut("⌃K"),
+            "openSettingsFromSwitcherShortcut": defaultShortcut("⌘,"),
+            "vimCycleLeft": defaultShortcut("h"),
+            "vimCycleRight": defaultShortcut("l"),
+            "vimCycleUp": defaultShortcut("k"),
+            "vimCycleDown": defaultShortcut("j"),
             "arrowKeysEnabled": "true",
-            "vimKeysEnabled": "false",
+            "vimKeysEnabled": "true",
+            "windowHintsEnabled": "true",
             "mouseHoverEnabled": "false",
             "cursorFollowFocus": CursorFollowFocus.never.indexAsString,
             "hideColoredCircles": "false",
@@ -48,17 +56,17 @@ class Preferences {
             "settingsWindowShownOnFirstLaunch": "false",
         ]
         (0..<maxShortcutCount).forEach { index in
-            values[indexToName("holdShortcut", index)] = defaultShortcut("⌥")
+            values[indexToName("holdShortcut", index)] = defaultShortcut("⌘")
             values[indexToName("nextWindowShortcut", index)] = defaultShortcut(index == 0 ? "⇥" : (index == 1 ? keyAboveTabDependingOnInputSource() : ""))
         }
         (0...maxShortcutCount).forEach { index in
             values[indexToName("appsToShow", index)] = index == 1 ? AppsToShowPreference.active.indexAsString : (index == 2 ? AppsToShowPreference.nonActive.indexAsString : AppsToShowPreference.all.indexAsString)
-            values[indexToName("spacesToShow", index)] = SpacesToShowPreference.all.indexAsString
+            values[indexToName("spacesToShow", index)] = ([0, 1, 9].contains(index) ? SpacesToShowPreference.visible : SpacesToShowPreference.all).indexAsString
             values[indexToName("screensToShow", index)] = ScreensToShowPreference.all.indexAsString
             values[indexToName("showMinimizedWindows", index)] = ShowHowPreference.show.indexAsString
             values[indexToName("showHiddenWindows", index)] = ShowHowPreference.show.indexAsString
             values[indexToName("showFullscreenWindows", index)] = ShowHowPreference.show.indexAsString
-            values[indexToName("showWindowlessApps", index)] = ShowHowPreference.showAtTheEnd.indexAsString
+            values[indexToName("showWindowlessApps", index)] = (index == 0 ? ShowHowPreference.show : ShowHowPreference.showAtTheEnd).indexAsString
             values[indexToName("windowOrder", index)] = WindowOrderPreference.recentlyFocused.indexAsString
             values[indexToName("shortcutStyle", index)] = ShortcutStylePreference.focusOnRelease.indexAsString
             values[indexToName("showAppsOrWindows", index)] = GroupAppsPreference.allWindows.indexAsString
@@ -83,6 +91,8 @@ class Preferences {
     static let staticShortcutKeys = [
         "focusWindowShortcut", "previousWindowShortcut", "cancelShortcut", "closeWindowShortcut",
         "minDeminWindowShortcut", "toggleFullscreenWindowShortcut", "quitAppShortcut", "hideShowAppShortcut", "searchShortcut",
+        "dismissSwitcherShortcut", "enterHintModeFromNormalShortcut", "openSettingsFromSwitcherShortcut",
+        "vimCycleLeft", "vimCycleRight", "vimCycleUp", "vimCycleDown",
     ]
     static let emptyShortcut = Shortcut(code: .none, modifierFlags: [], characters: nil, charactersIgnoringModifiers: nil)
     private static let shortcutStorageStringField = "string"
@@ -101,8 +111,12 @@ class Preferences {
     static var quitAppShortcut: Shortcut? { CachedUserDefaults.shortcut("quitAppShortcut") }
     static var hideShowAppShortcut: Shortcut? { CachedUserDefaults.shortcut("hideShowAppShortcut") }
     static var searchShortcut: Shortcut? { CachedUserDefaults.shortcut("searchShortcut") }
+    static var dismissSwitcherShortcut: Shortcut? { CachedUserDefaults.shortcut("dismissSwitcherShortcut") }
+    static var enterHintModeFromNormalShortcut: Shortcut? { CachedUserDefaults.shortcut("enterHintModeFromNormalShortcut") }
+    static var openSettingsFromSwitcherShortcut: Shortcut? { CachedUserDefaults.shortcut("openSettingsFromSwitcherShortcut") }
     static var arrowKeysEnabled: Bool { CachedUserDefaults.bool("arrowKeysEnabled") }
     static var vimKeysEnabled: Bool { CachedUserDefaults.bool("vimKeysEnabled") }
+    static var windowHintsEnabled: Bool { CachedUserDefaults.bool("windowHintsEnabled") }
     static var mouseHoverEnabled: Bool { CachedUserDefaults.bool("mouseHoverEnabled") }
     static var cursorFollowFocus: CursorFollowFocus { CachedUserDefaults.macroPref("cursorFollowFocus", CursorFollowFocus.allCases) }
     static var trackpadHapticFeedbackEnabled: Bool { CachedUserDefaults.bool("trackpadHapticFeedbackEnabled") }
@@ -212,6 +226,14 @@ class Preferences {
 
     static func shortcut(_ key: String) -> Shortcut? {
         CachedUserDefaults.shortcut(key)
+    }
+
+    static func shortcutDisplayString(_ key: String) -> String {
+        guard let objectValue = UserDefaults.standard.object(forKey: key) as? [String: Any],
+              let s = objectValue[shortcutStorageStringField] as? String, !s.isEmpty else {
+            return shortcut(key)?.readableStringRepresentation(isASCII: true) ?? ""
+        }
+        return s
     }
 
     static func set<T>(_ key: String, _ value: T, _ notify: Bool = true) where T: Encodable {
