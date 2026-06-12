@@ -205,11 +205,13 @@ class TableGroupView: ClickHoverStackView {
     struct Row {
         let leftTitle: String
         let subTitle: String?
+        let leftTitleBold: Bool
         let rightViews: [NSView]
 
-        init(leftTitle: String, subTitle: String? = nil, rightViews: [NSView]) {
+        init(leftTitle: String, subTitle: String? = nil, leftTitleBold: Bool = false, rightViews: [NSView]) {
             self.leftTitle = leftTitle
             self.subTitle = subTitle
+            self.leftTitleBold = leftTitleBold
             self.rightViews = rightViews
         }
     }
@@ -343,6 +345,11 @@ class TableGroupView: ClickHoverStackView {
 
     @discardableResult
     func addRow(_ row: Row, onClick: EventClosure? = nil, onMouseEntered: EventClosure? = nil, onMouseExited: EventClosure? = nil) -> RowInfo {
+        if row.leftTitleBold {
+            let secondaryViews: [NSView]? = row.subTitle.map { [createSubLabel(with: $0)] } ?? nil
+            return addRow(leftViews: [TableGroupView.makeText(row.leftTitle, bold: true)], rightViews: row.rightViews, secondaryViews: secondaryViews,
+                onClick: onClick, onMouseEntered: onMouseEntered, onMouseExited: onMouseExited)
+        }
         return addRow(leftText: row.leftTitle, rightViews: row.rightViews, subText: row.subTitle,
             onClick: onClick, onMouseEntered: onMouseEntered, onMouseExited: onMouseExited)
     }

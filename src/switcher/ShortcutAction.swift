@@ -6,8 +6,53 @@ struct ShortcutAction {
 }
 
 enum ShortcutActions {
+    private static func runFocusShortcutActionForCurrentHintMode() {
+        switch TilesView.chooserHintMode {
+        case .normal, .focusHints:
+            App.focusTarget()
+        case .minimizeHints:
+            onSelectedWindow { $0.minDemin() }
+            App.refreshUi(true)
+        case .closeHints:
+            onSelectedWindow(closesOneTab: true) { $0.close() }
+        case .quitHints:
+            onSelectedWindow { $0.application.quit() }
+        case .fullscreenHints:
+            onSelectedWindow { $0.toggleFullscreen() }
+            App.refreshUi(true)
+        case .hideHints:
+            onSelectedWindow { $0.application.hideOrShow() }
+            App.refreshUi(true)
+        }
+    }
+
+    private static func enterHintModeOrRun(_ mode: ChooserHintMode, _ run: () -> Void) {
+        guard Preferences.windowHintsEnabled else {
+            run()
+            return
+        }
+        if TilesView.chooserHintMode == mode { return }
+        TilesView.switchToHintMode(mode)
+    }
+
     static let all: [ShortcutAction] = [
-        ShortcutAction(id: "focusWindowShortcut", perform: { App.focusTarget() }),
+        ShortcutAction(id: "focusWindowShortcut", perform: {
+            if !Preferences.windowHintsEnabled {
+                App.focusTarget()
+                return
+            }
+            runFocusShortcutActionForCurrentHintMode()
+        }),
+        ShortcutAction(id: "enterHintModeFromNormalShortcut", perform: {
+            guard Preferences.windowHintsEnabled else { return }
+            switch TilesView.chooserHintMode {
+            case .normal, .minimizeHints, .closeHints, .quitHints, .hideHints:
+                TilesView.switchToHintMode(.focusHints)
+            default:
+                break
+            }
+        }),
+        ShortcutAction(id: "openSettingsFromSwitcherShortcut", perform: { App.showSettingsWindow() }),
         ShortcutAction(id: "previousWindowShortcut", perform: { App.previousWindowShortcutWithRepeatingKey() }),
         ShortcutAction(id: "→", perform: { App.cycleSelection(.right) }),
         ShortcutAction(id: "←", perform: { App.cycleSelection(.left) }),
@@ -25,14 +70,18 @@ enum ShortcutActions {
                 case .closeSwitcher: App.hideUi()
             }
         }),
-        ShortcutAction(id: "closeWindowShortcut", perform: { onSelectedWindow(closesOneTab: true) { $0.close() } }),
-        ShortcutAction(id: "minDeminWindowShortcut", perform: { onSelectedWindow { $0.minDemin() } }),
-        ShortcutAction(id: "toggleFullscreenWindowShortcut", perform: { onSelectedWindow { $0.toggleFullscreen() } }),
-        ShortcutAction(id: "quitAppShortcut", perform: { onSelectedWindow { $0.application.quit() } }),
-        ShortcutAction(id: "hideShowAppShortcut", perform: { onSelectedWindow { $0.application.hideOrShow() } }),
+        ShortcutAction(id: "closeWindowShortcut", perform: { enterHintModeOrRun(.closeHints) { onSelectedWindow(closesOneTab: true) { $0.close() } } }),
+        ShortcutAction(id: "minDeminWindowShortcut", perform: { enterHintModeOrRun(.minimizeHints) { onSelectedWindow { $0.minDemin() } } }),
+        ShortcutAction(id: "toggleFullscreenWindowShortcut", perform: { enterHintModeOrRun(.fullscreenHints) { onSelectedWindow { $0.toggleFullscreen() } } }),
+        ShortcutAction(id: "quitAppShortcut", perform: { enterHintModeOrRun(.quitHints) { onSelectedWindow { $0.application.quit() } } }),
+        ShortcutAction(id: "hideShowAppShortcut", perform: { enterHintModeOrRun(.hideHints) { onSelectedWindow { $0.application.hideOrShow() } } }),
         ShortcutAction(id: "searchShortcut", perform: {
             guard SwitcherSession.isActive else { return }
             TilesView.toggleSearchModeFromShortcut()
+        }),
+        ShortcutAction(id: "dismissSwitcherShortcut", perform: {
+            guard !Preferences.windowHintsEnabled || TilesView.windowHintMode else { return }
+            App.hideUi()
         }),
     ]
 

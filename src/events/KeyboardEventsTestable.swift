@@ -1,3 +1,5 @@
+import Cocoa
+import Carbon.HIToolbox.Events
 import ShortcutRecorder
 import Carbon.HIToolbox.Events
 
@@ -38,6 +40,46 @@ func handleKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?, _ ke
                          _ recordedHoldRelease: Bool = false) -> Bool {
     // The Escape absorption tap can consume the key before NSEvent dismissal monitors see it.
     if keyCode == UInt32(kVK_Escape) { Day15HardGatePopover.dismissOnEscape() }
+    if let event, event.type == .keyDown, SwitcherSession.isActive, TilesPanel.shared.isKeyWindow,
+       !event.isARepeat {
+        let dismissAllowed = !Preferences.windowHintsEnabled || TilesView.windowHintMode
+        let dismissMatch = dismissAllowed && matchesActivePanelShortcut(event, "dismissSwitcherShortcut")
+        let quitMatch = matchesActivePanelShortcut(event, "quitAppShortcut")
+        if dismissMatch && quitMatch && activePanelShortcutsSameBinding("dismissSwitcherShortcut", "quitAppShortcut") {
+            if TilesView.windowHintMode {
+                App.hideUi()
+                return true
+            }
+            if let quitShortcut = ControlsTab.shortcuts["quitAppShortcut"] {
+                quitShortcut.executeAction(isARepeat)
+                return true
+            }
+        }
+        if dismissMatch {
+            App.hideUi()
+            return true
+        }
+    }
+    if let event, event.type == .keyDown, SwitcherSession.isActive, TilesPanel.shared.isKeyWindow,
+       !event.isARepeat {
+        if TilesView.tryEnterChooserHintModeFromEvent(event) {
+            return true
+        }
+    }
+    if let event, event.type == .keyDown, SwitcherSession.isActive, TilesPanel.shared.isKeyWindow,
+       !event.isARepeat,
+       event.keyCode == UInt16(kVK_Escape),
+       Preferences.windowHintsEnabled, TilesView.windowHintMode {
+        TilesView.exitWindowHintMode()
+        return true
+    }
+    if let event, event.type == .keyDown, SwitcherSession.isActive, TilesPanel.shared.isKeyWindow,
+       !searchFieldBlocksWindowHints(), !ContextMenuEvents.isMenuOpen,
+       Preferences.windowHintsEnabled, TilesView.windowHintMode {
+        if TilesView.handleWindowHintKeyDown(event, isARepeat) {
+            return true
+        }
+    }
     if let event, shouldAbsorbSearchEditingKeyDown(event) {
         switch TilesView.handleSearchEditingKeyDown(event) {
         case .handled: return true
@@ -79,6 +121,25 @@ private func settleLostHoldRelease(_ recordedHoldRelease: Bool = false) {
     guard let session = SwitcherSession.current else { return }
     ControlsTab.shortcuts[Preferences.indexToName("holdShortcut", session.shortcutIndex)]?
         .settleLostRelease(recordedHoldRelease)
+}
+
+private func activePanelShortcutsSameBinding(_ a: String, _ b: String) -> Bool {
+    guard let sa = Preferences.shortcut(a), let sb = Preferences.shortcut(b), sa.keyCode != .none, sb.keyCode != .none else { return false }
+    guard sa.carbonKeyCode == sb.carbonKeyCode else { return false }
+    return sa.carbonModifierFlags.cleaned() == sb.carbonModifierFlags.cleaned()
+}
+
+private func searchFieldBlocksWindowHints() -> Bool {
+    TilesView.isSearchEditing && !TilesView.searchFieldYieldsToHints
+}
+
+private func matchesActivePanelShortcut(_ event: NSEvent, _ shortcutId: String) -> Bool {
+    guard let shortcut = ControlsTab.shortcuts[shortcutId]?.shortcut else { return false }
+    if shortcut.keyCode == .none || shortcut.carbonKeyCode != UInt32(event.keyCode) { return false }
+    let holdModifiers = ControlsTab.shortcuts[Preferences.indexToName("holdShortcut", SwitcherSession.activeShortcutIndex)]?.shortcut.carbonModifierFlags.cleaned() ?? 0
+    let eventModifiers = cocoaToCarbonFlags(event.modifierFlags).cleaned()
+    let shortcutModifiers = shortcut.carbonModifierFlags.cleaned()
+    return eventModifiers == shortcutModifiers || eventModifiers == (shortcutModifiers | holdModifiers)
 }
 
 private func shouldAbsorbSearchEditingKeyDown(_ event: NSEvent?) -> Bool {

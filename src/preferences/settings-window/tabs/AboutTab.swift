@@ -7,15 +7,22 @@ class AboutTab {
         let appIconSize = NSSize(width: 128, height: 128)
         appIcon.updateContents(.cgImage(App.appIcon), appIconSize)
         appIcon.fit(128, 128)
-        let appText = StackView([
+        var aboutRows: [NSView] = [
             BoldLabel(App.name),
-            NSTextField(labelWithString: NSLocalizedString("Version", comment: "") + " " + App.version),
-            NSTextField(labelWithString: App.licence),
+            NSTextField(wrappingLabelWithString: NSLocalizedString("Version", comment: "") + " " + App.version),
+        ]
+        if !App.buildDate.isEmpty {
+            aboutRows.append(NSTextField(wrappingLabelWithString: String(format: NSLocalizedString("about.buildDateFormat", comment: ""), App.buildDate)))
+        }
+        aboutRows.append(contentsOf: [
+            NSTextField(wrappingLabelWithString: App.licence),
             HyperlinkLabel(NSLocalizedString("Website", comment: ""), Endpoints.website),
             HyperlinkLabel(NSLocalizedString("Source code", comment: ""), App.repository),
-        ], .vertical)
+        ])
+        let appText = StackView(aboutRows, .vertical)
         appText.spacing = GridView.interPadding / 2
-        let rowToSeparate = 3
+        let licenceIndex = 2 + (App.buildDate.isEmpty ? 0 : 1)
+        let rowToSeparate = licenceIndex + 1
         appText.views[rowToSeparate].topAnchor.constraint(equalTo: appText.views[rowToSeparate - 1].bottomAnchor, constant: GridView.interPadding).isActive = true
         let appInfo = NSStackView(views: [appIcon, appText])
         appIcon.translatesAutoresizingMaskIntoConstraints = false

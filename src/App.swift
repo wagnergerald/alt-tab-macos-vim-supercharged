@@ -13,6 +13,7 @@ class App: AppCenterApplication {
     static let bundleURL = Bundle.main.bundleURL
     static let name = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as! String
     static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as! String
+    static let buildDate = Bundle.main.object(forInfoDictionaryKey: "AltTabBuildDate") as? String ?? ""
     static let licence = Bundle.main.object(forInfoDictionaryKey: "NSHumanReadableCopyright") as! String
     static let repository = "https://github.com/lwouis/alt-tab-macos"
     static let appIcon: CGImage = {
@@ -107,6 +108,7 @@ class App: AppCenterApplication {
     private static func endHideUi(didSwitchWindow: Bool = false) {
         MainThreadStall.step()
         UsageStats.resetSession()
+        TilesView.resetWindowHintState()
         ContextMenuEvents.toggle(false)
         TrackpadEvents.reset()
         ProTransitionManager.shared.onSwitcherDismissed(didSwitchWindow: didSwitchWindow)
@@ -184,6 +186,7 @@ class App: AppCenterApplication {
             pendingShowSettingsWindow = true
             return
         }
+        if SwitcherSession.isActive { hideUi() }
         initializeSettingsWindowIfNeeded()
         showSecondaryWindow(SettingsWindow.shared!)
         if SettingsWindow.shared!.isVisible != true {
@@ -334,6 +337,26 @@ class App: AppCenterApplication {
         KeyRepeatTimer.startRepeatingKeyPreviousWindow()
     }
 
+    static func closeSelectedWindow() {
+        Windows.selectedWindow()?.close()
+    }
+
+    static func minDeminSelectedWindow() {
+        Windows.selectedWindow()?.minDemin()
+    }
+
+    static func toggleFullscreenSelectedWindow() {
+        Windows.selectedWindow()?.toggleFullscreen()
+    }
+
+    static func quitSelectedApp() {
+        Windows.selectedWindow()?.application.quit()
+    }
+
+    static func hideShowSelectedApp() {
+        Windows.selectedWindow()?.application.hideOrShow()
+    }
+
     static func focusSelectedWindow(_ selectedWindow: Window?) {
         MainThreadStall.step()
         let missionControl = MissionControl.state()
@@ -462,6 +485,7 @@ class App: AppCenterApplication {
         // Measured on a cold start: three tabs of a 4-tab Finder group were adopted 28ms before the grace
         // expired, and the group opened unfolded as 3 tiles, then folded a beat later (measured live).
         if listChangedSincePress, !Windows.updatesBeforeShowing() { hideUi(); return }
+        TilesView.resetWindowHintState()
         Appearance.update()
         guard SwitcherSession.isActive else { return }
         TilesView.swapBackgroundViewIfNeeded()
@@ -623,6 +647,7 @@ class App: AppCenterApplication {
 
 extension App: NSApplicationDelegate {
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        Self.turnOffAppKitConstraintVisualizationDebugKeys()
         App.appCenterDelegate = AppCenterCrash()
         App.shared.disableRelaunchOnLogin()
         Logger.initialize()
@@ -746,6 +771,19 @@ extension App: NSApplicationDelegate {
         makeSureAllCapturesAreFinished()
         StapledTicket.restoreBeforeExit()
         return .terminateNow
+    }
+
+    /// AppKit reads these keys from UserDefaults (app, global, or `-Key YES` launch args). Leftover YES from debugging draws purple constraint / alignment overlays.
+    private static func turnOffAppKitConstraintVisualizationDebugKeys() {
+        let keys = [
+            "NSConstraintBasedLayoutVisualizeMutuallyExclusiveConstraints",
+            "NSShowAlignmentRects",
+            "NSShowAllViews",
+        ]
+        var registration: [String: Any] = [:]
+        for k in keys { registration[k] = false }
+        UserDefaults.standard.register(defaults: registration)
+        for k in keys { UserDefaults.standard.set(false, forKey: k) }
     }
 }
 

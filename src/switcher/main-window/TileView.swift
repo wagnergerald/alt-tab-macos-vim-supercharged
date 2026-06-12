@@ -12,6 +12,7 @@ class TileView: FlippedView {
     var label = TileTitleView(font: Appearance.font)
     var statusIcons = StatusIconsView()
     var dockLabelIcon = TileFontIconView(badgeSize: TileFontIconView.badgeBaseSize(forIconSize: TileView.iconSize().width))
+    var windowHintBadge = WindowHintLabelView()
     var windowlessAppIndicator = WindowlessAppIndicator(tooltip: TileView.noOpenWindowToolTip)
     private var fullTitle = ""
     private var fullTitleWidth = CGFloat(0)
@@ -137,6 +138,8 @@ class TileView: FlippedView {
         addSubviews([label, statusIcons])
         setSubviewAbove(windowlessAppIndicator)
         addSubview(dockLabelIcon)
+        windowHintBadge.isHidden = true
+        addSubview(windowHintBadge)
         label.fixHeight()
         // Disable implicit CALayer animations on every subview that moves between styles. The
         // `caTransaction { setDisableActions(true) }` in `TilesPanel.updateContents` covers the
@@ -555,34 +558,67 @@ class TileView: FlippedView {
         (text as NSString).size(withAttributes: attributes).width
     }
 
+    private func baseTitleRowLabelWidth() -> CGFloat {
+        let edgeInsets = Appearance.edgeInsetsSize
+        let hWidth = frame.width - edgeInsets * 2
+        return hWidth - appIcon.frame.width - Appearance.appIconLabelSpacing - statusIcons.totalWidth
+    }
+
+    private static let windowHintToTitleGap = CGFloat(0)
+
+    private func hintReserveWidthNextToAppIcon() -> CGFloat {
+        guard !windowHintBadge.isHidden, Preferences.windowHintsEnabled, TilesView.windowHintMode else { return 0 }
+        return windowHintBadge.frame.width + Self.windowHintToTitleGap
+    }
+
+    private func applyTitleRowLabelLayout() {
+        guard Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex) != .appIcons else { return }
+        let edgeInsets = Appearance.edgeInsetsSize
+        let hHeight = max(appIcon.frame.height, TilesView.layoutCache.labelHeight)
+        let reserve = hintReserveWidthNextToAppIcon()
+        let labelW = max(0, baseTitleRowLabelWidth() - reserve)
+        let labelX: CGFloat
+        let iconToHint = Appearance.appIconLabelSpacing
+        if App.shared.userInterfaceLayoutDirection == .leftToRight {
+            labelX = appIcon.frame.maxX + iconToHint + reserve
+        } else {
+            labelX = appIcon.frame.minX - iconToHint - reserve - labelW
+        }
+        assignIfDifferent(&label.frame.origin.x, labelX)
+        assignIfDifferent(&label.frame.origin.y, edgeInsets + ((hHeight - TilesView.layoutCache.labelHeight) / 2).rounded())
+        label.setWidth(labelW)
+    }
+
+    private func reflowTitleRowLabelForWindowHint() {
+        guard Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex) != .appIcons else { return }
+        applyTitleRowLabelLayout()
+        applySearchHighlight()
+    }
+
     private func updateSizes(_ newHeight: CGFloat) {
         setFrameWidthHeight(newHeight)
         if Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex) != .appIcons {
-            let hWidth = frame.width - Appearance.edgeInsetsSize * 2
-            let labelWidth = hWidth - appIcon.frame.width - Appearance.appIconLabelSpacing - statusIcons.totalWidth
-            label.setWidth(labelWidth)
+            label.setWidth(max(0, baseTitleRowLabelWidth() - hintReserveWidthNextToAppIcon()))
         }
     }
 
     private func updatePositions() {
         let edgeInsets = Appearance.edgeInsetsSize
-        assignIfDifferent(&appIcon.frame.origin, NSPoint(x: edgeInsets, y: edgeInsets))
         if Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex) != .appIcons {
             let hWidth = frame.width - edgeInsets * 2
             let hHeight = max(appIcon.frame.height, TilesView.layoutCache.labelHeight)
-            if App.shared.userInterfaceLayoutDirection == .rightToLeft {
-                assignIfDifferent(&appIcon.frame.origin.x, edgeInsets + hWidth - appIcon.frame.width)
-            }
-            statusIcons.layoutIcons(hWidth: hWidth, hHeight: hHeight, edgeInsets: edgeInsets)
-            let labelWidth = hWidth - appIcon.frame.width - Appearance.appIconLabelSpacing - statusIcons.totalWidth
-            let labelX: CGFloat
+            let iconY = edgeInsets + ((hHeight - appIcon.frame.height) / 2).rounded()
+            let iconX: CGFloat
             if App.shared.userInterfaceLayoutDirection == .leftToRight {
-                labelX = appIcon.frame.maxX + Appearance.appIconLabelSpacing
+                iconX = edgeInsets
             } else {
-                labelX = edgeInsets + hWidth - appIcon.frame.width - Appearance.appIconLabelSpacing - labelWidth
+                iconX = edgeInsets + hWidth - appIcon.frame.width
             }
-            assignIfDifferent(&label.frame.origin.x, labelX)
-            assignIfDifferent(&label.frame.origin.y, edgeInsets + ((hHeight - TilesView.layoutCache.labelHeight) / 2).rounded())
+            assignIfDifferent(&appIcon.frame.origin, NSPoint(x: iconX, y: iconY))
+            statusIcons.layoutIcons(hWidth: hWidth, hHeight: hHeight, edgeInsets: edgeInsets)
+            applyTitleRowLabelLayout()
+        } else {
+            assignIfDifferent(&appIcon.frame.origin, NSPoint(x: edgeInsets, y: edgeInsets))
         }
         if Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex) == .thumbnails {
             let hHeight = max(appIcon.frame.height, TilesView.layoutCache.labelHeight)
@@ -591,6 +627,44 @@ class TileView: FlippedView {
         }
         updateWindowlessAppIndicatorPosition()
         updateDockLabelIconPosition()
+        updateWindowHintBadgePosition()
+    }
+
+    func updateWindowHintBadge(_ text: String?) {
+        guard let text, !text.isEmpty else {
+            assignIfDifferent(&windowHintBadge.isHidden, true)
+            reflowTitleRowLabelForWindowHint()
+            return
+        }
+        windowHintBadge.isHidden = false
+        windowHintBadge.setLabelText(text)
+        windowHintBadge.setAccessibilityLabel("Window hint \(text)")
+        windowHintBadge.setFrameSize(windowHintBadge.intrinsicContentSize)
+        reflowTitleRowLabelForWindowHint()
+        updateWindowHintBadgePosition()
+    }
+
+    private func updateWindowHintBadgePosition() {
+        guard !windowHintBadge.isHidden else { return }
+        let edgeInsets = Appearance.edgeInsetsSize
+        let spacing = Appearance.appIconLabelSpacing
+        let hintW = windowHintBadge.frame.width
+        let hintH = windowHintBadge.frame.height
+        let y: CGFloat
+        if Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex) != .appIcons {
+            let hHeight = max(appIcon.frame.height, TilesView.layoutCache.labelHeight)
+            let rowMidY = edgeInsets + hHeight / 2
+            y = rowMidY - hintH / 2
+        } else {
+            y = appIcon.frame.midY - hintH / 2
+        }
+        let x: CGFloat
+        if App.shared.userInterfaceLayoutDirection == .leftToRight {
+            x = appIcon.frame.maxX + spacing
+        } else {
+            x = appIcon.frame.minX - spacing - hintW
+        }
+        assignIfDifferent(&windowHintBadge.frame.origin, CGPoint(x: x, y: y))
     }
 
     private func updateDockLabelIconPosition() {

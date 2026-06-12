@@ -47,6 +47,7 @@ class PreferencesEvents {
         UserDefaultsEvents.observe()
         #endif
         ControlsTab.initializePreferencesDependentState()
+        WindowHintsShortcutStyle.enforceOnLaunchIfNeeded()
         #if DEBUG
         if !Preferences.qaPristine && !QaLifecycle.enabled { applyUpdatePolicyPreference() }
         #else

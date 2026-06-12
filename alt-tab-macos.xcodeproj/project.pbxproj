@@ -336,6 +336,7 @@
 		D04BA1B133D53572D7B312C2 /* TileFontIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04BA1DF8CAB2FAB7FE9244B /* TileFontIconView.swift */; };
 		D04BA1C85041FB043FD43E65 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = D04BA05006D56C7AA011C0CE /* Localizable.strings */; };
 		D04BA1CEC6B9C8945FEC8740 /* TileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04BA258B56193958D60978A /* TileView.swift */; };
+		D04BA501D000000000000002 /* WindowHintLabelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04BA501D000000000000001 /* WindowHintLabelView.swift */; };
 		D04BA22840D40E3885B2B29E /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = D04BA3A932D3C8F850504919 /* InfoPlist.strings */; };
 		D04BA26A691D56031FCCF00C /* Sysctl.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04BA8DB8AA7E5570DAC568A /* Sysctl.swift */; };
 		D04BA276B3241D440F65B149 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = D04BA5C2BB394F1624DD5B45 /* InfoPlist.strings */; };
@@ -419,6 +420,8 @@
 		D04BAFB217F9F8E58C3B09AD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = D04BA82BB17B85A88A5D2B87 /* InfoPlist.strings */; };
 		D04BAFB90E00AA5D662EAF24 /* PermissionsWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04BA9DF10D0CC4CA0C8F814 /* PermissionsWindow.swift */; };
 		D04BAFB973C3D28718FAEB87 /* Windows.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04BACD976030676FD0761D5 /* Windows.swift */; };
+		D04BA501C000000000000002 /* WindowHintLabels.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04BA501C000000000000001 /* WindowHintLabels.swift */; };
+		D04BA501E000000000000002 /* WindowHintsShortcutStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04BA501E000000000000001 /* WindowHintsShortcutStyle.swift */; };
 		D04BAFBC862BA5FE0294EA7A /* AXUIElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04BA6F823BC0EDA9AA4B80A /* AXUIElement.swift */; };
 		D04BAFC1A1B2C3D4E5F60002 /* TileOverView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04BAFC0A1B2C3D4E5F60001 /* TileOverView.swift */; };
 		D04BAFC3A1B2C3D4E5F60004 /* TileUnderLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = D04BAFC2A1B2C3D4E5F60003 /* TileUnderLayer.swift */; };
@@ -811,6 +814,7 @@
 		D04BA1DF8CAB2FAB7FE9244B /* TileFontIconView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TileFontIconView.swift; sourceTree = "<group>"; };
 		D04BA2526DC6726E0F7ACF7C /* LabelAndControl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LabelAndControl.swift; sourceTree = "<group>"; };
 		D04BA258B56193958D60978A /* TileView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TileView.swift; sourceTree = "<group>"; };
+		D04BA501D000000000000001 /* WindowHintLabelView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WindowHintLabelView.swift; sourceTree = "<group>"; };
 		D04BA26C75F76C277653C932 /* FeedbackWindow.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FeedbackWindow.swift; sourceTree = "<group>"; };
 		D04BA27695D9A5824720BD7B /* ExceptionsTab.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ExceptionsTab.swift; sourceTree = "<group>"; };
 		D04BA282BB16C1554595A968 /* Applications.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Applications.swift; sourceTree = "<group>"; };
@@ -862,7 +866,7 @@
 		D04BA7F8F1F44D5D9844BFF5 /* ar */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = ar; path = InfoPlist.strings; sourceTree = "<group>"; };
 		D04BA812B8DCB915B8F4B915 /* contributors.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = contributors.md; sourceTree = "<group>"; };
 		D04BA8209A337A2960716E3B /* zh-CN */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = "zh-CN"; path = Localizable.strings; sourceTree = "<group>"; };
-		D04BA82F792DF53958D92572 /* AltTab.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AltTab.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		D04BA82F792DF53958D92572 /* AltTabDev.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AltTabDev.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		D04BA84F172AE89F210CA01D /* Pipfile.lock */ = {isa = PBXFileReference; lastKnownFileType = file.lock; path = Pipfile.lock; sourceTree = "<group>"; };
 		D04BA8AC77465E1B2BC947CF /* StackView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = StackView.swift; sourceTree = "<group>"; };
 		D04BA8DB8AA7E5570DAC568A /* Sysctl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Sysctl.swift; sourceTree = "<group>"; };
@@ -895,6 +899,8 @@
 		D04BACABD048E62EBE4576CC /* DebugProfile.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DebugProfile.swift; sourceTree = "<group>"; };
 		D04BACB97A5895839BCB14BD /* es */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = es; path = InfoPlist.strings; sourceTree = "<group>"; };
 		D04BACD976030676FD0761D5 /* Windows.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Windows.swift; sourceTree = "<group>"; };
+		D04BA501C000000000000001 /* WindowHintLabels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WindowHintLabels.swift; sourceTree = "<group>"; };
+		D04BA501E000000000000001 /* WindowHintsShortcutStyle.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WindowHintsShortcutStyle.swift; sourceTree = "<group>"; };
 		D04BACE22DC907F03D193075 /* GeneralTab.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GeneralTab.swift; sourceTree = "<group>"; };
 		D04BACEE8D430B8CAAD8C4CD /* BoldLabel.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BoldLabel.swift; sourceTree = "<group>"; };
 		D04BAD1297730B191E96E7FE /* TileTitleView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TileTitleView.swift; sourceTree = "<group>"; };
@@ -1404,6 +1410,8 @@
 		CC00000000000000000C0010 /* switcher */ = {
 			isa = PBXGroup;
 			children = (
+				D04BA501C000000000000001 /* WindowHintLabels.swift */,
+				D04BA501E000000000000001 /* WindowHintsShortcutStyle.swift */,
 				BF0C8BA452332236D972C60E /* ATShortcut.swift */,
 				D04BA00000000000C0DE0010 /* ShortcutAction.swift */,
 				D04BA00000000000C0DE0020 /* SwitcherSession.swift */,
@@ -1521,7 +1529,7 @@
 		D04BA1A461BBB5A9BE15E015 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				D04BA82F792DF53958D92572 /* AltTab.app */,
+				D04BA82F792DF53958D92572 /* AltTabDev.app */,
 				BF0C832DEED422648209CCD2 /* unit-tests.xctest */,
 			);
 			name = Products;
@@ -1729,6 +1737,7 @@
 				D04BAD1297730B191E96E7FE /* TileTitleView.swift */,
 				D04BA1DF8CAB2FAB7FE9244B /* TileFontIconView.swift */,
 				D04BA258B56193958D60978A /* TileView.swift */,
+				D04BA501D000000000000001 /* WindowHintLabelView.swift */,
 				5F7B6AFB2F3BAB98003E25E8 /* StatusIconsView.swift */,
 				D04BAA998119CAA8B70A2B67 /* TilesView.swift */,
 				5E6010B00000000000000001 /* TileGridLayout.swift */,
@@ -2029,6 +2038,7 @@
 				D04BA96F3DC99263120BCD21 /* Resources */,
 				5FDF9EB22FB3584300703843 /* Embed Frameworks */,
 				5FDF9EB52FB358C100703843 /* Copy Sparkle Helpers */,
+				A04BB00E1BCDEF012345678A /* Inject build date */,
 			);
 			buildRules = (
 			);
@@ -2036,7 +2046,7 @@
 			);
 			name = "alt-tab-macos";
 			productName = "alt-tab-macos";
-			productReference = D04BA82F792DF53958D92572 /* AltTab.app */;
+			productReference = D04BA82F792DF53958D92572 /* AltTabDev.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -2047,6 +2057,11 @@
 			attributes = {
 				LastUpgradeCheck = 1620;
 				ORGANIZATIONNAME = lwouis;
+				TargetAttributes = {
+					D04BA5E73DAF232ADE11C97A = {
+						DevelopmentTeam = 9LJW4KX8D3;
+					};
+				};
 			};
 			buildConfigurationList = D04BA83C9495F252D87CDF0F /* Build configuration list for PBXProject "alt-tab-macos" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -2164,6 +2179,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		A04BB00E1BCDEF012345678A /* Inject build date */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Inject build date";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "bash \"${SRCROOT}/scripts/inject_build_date_into_info_plist.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
 		5FDF9EB52FB358C100703843 /* Copy Sparkle Helpers */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -2437,6 +2471,8 @@
 				5EAA25AA000000000000A002 /* TrackedWindowState.swift in Sources */,
 				5EAA25AB000000000000A002 /* WindowEventReducer.swift in Sources */,
 				5EAA25AC000000000000A002 /* TrackedWindowStateBridge.swift in Sources */,
+				D04BA501C000000000000002 /* WindowHintLabels.swift in Sources */,
+				D04BA501E000000000000002 /* WindowHintsShortcutStyle.swift in Sources */,
 				F00DCAFE0000000000001002 /* Search.swift in Sources */,
 				F00DCAFE0000000000001003 /* SearchTestable.swift in Sources */,
 				D04BAC011A71E0418154F8CD /* Preferences.swift in Sources */,
@@ -2458,6 +2494,7 @@
 				D04BA69D47B5E60A6AD9CBD9 /* TileTitleView.swift in Sources */,
 				D04BA1B133D53572D7B312C2 /* TileFontIconView.swift in Sources */,
 				D04BA1CEC6B9C8945FEC8740 /* TileView.swift in Sources */,
+				D04BA501D000000000000002 /* WindowHintLabelView.swift in Sources */,
 				D04BA14D93726795A6937832 /* LabelAndControl.swift in Sources */,
 				5F791E4B2F1C65E100B6419C /* ApplicationDiscriminator.swift in Sources */,
 				D04BA7BE7F3DD24D58ACE942 /* AppearanceTab.swift in Sources */,

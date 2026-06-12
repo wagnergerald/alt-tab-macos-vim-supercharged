@@ -553,6 +553,16 @@ class AppearanceTab: NSObject {
         }
         table.addRow(leftText: AppearanceTab.labelShortcutStyle,
             rightViews: [control, makeOverrideIcon("shortcutStyleOverride")])
+        updateAfterKeysReleasedRowState()
+    }
+
+    static func updateAfterKeysReleasedRowState() {
+        guard let control = shortcutStyleControlRef else { return }
+        let locked = Preferences.windowHintsEnabled
+        control.isEnabled = !locked
+        if locked {
+            refreshShortcutStyleSegmentAppearance(control)
+        }
     }
 
     private static func wrapShortcutStyleProLockIntercept(_ control: NSSegmentedControl, proIndex: Int) {
