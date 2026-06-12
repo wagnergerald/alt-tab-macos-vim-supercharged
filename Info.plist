@@ -27,7 +27,6 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-
 	<!-- ===== Launch behavior (read by LaunchServices before app starts) ===== -->
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
