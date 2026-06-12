@@ -2010,7 +2010,6 @@
 				D04BA96F3DC99263120BCD21 /* Resources */,
 				5FDF9EB22FB3584300703843 /* Embed Frameworks */,
 				5FDF9EB52FB358C100703843 /* Copy Sparkle Helpers */,
-				A04BB00E1BCDEF012345678A /* Inject build date */,
 			);
 			buildRules = (
 			);
