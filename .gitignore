@@ -18,5 +18,6 @@ codesign.p12
 /.claude/*
 !/.claude/skills/
 /config/local.xcconfig
+/config/generated-dev-version.xcconfig
 /scripts/l10n/missing-translations.json
 /ai/output/

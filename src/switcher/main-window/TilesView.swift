@@ -27,8 +27,8 @@ class TilesView {
     private static var cachedEffectViews: [EffectViewKind: EffectView] = [:]
     static var searchField = NSSearchField(frame: NSRect(x: 0, y: 0, width: 320, height: 30))
     static var noWindowLabel = NSTextField(labelWithString: NSLocalizedString("No Window", comment: ""))
-    private static let chooserBannerChromeHeightNormal: CGFloat = 120
-    private static let chooserBannerChromeHeightHint: CGFloat = 110
+    private static let chooserBannerChromeHeightNormal: CGFloat = 92
+    private static let chooserBannerChromeHeightHint: CGFloat = 84
     private static let hintBannerGapNormal: CGFloat = 4
     private static let hintBannerGapHint: CGFloat = 4
     private static let searchTabHintGap: CGFloat = 8
@@ -418,38 +418,38 @@ class TilesView {
         chooserBannerTitleLabel.isBordered = false
         chooserBannerTitleLabel.drawsBackground = false
         chooserBannerTitleLabel.alignment = .center
-        chooserBannerTitleLabel.font = NSFont.systemFont(ofSize: 13, weight: .bold)
+        chooserBannerTitleLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize, weight: .semibold)
         chooserBannerTitleLabel.textColor = NSColor.labelColor
         chooserBannerDetailLabel.isEditable = false
         chooserBannerDetailLabel.isBordered = false
         chooserBannerDetailLabel.drawsBackground = false
         chooserBannerDetailLabel.alignment = .center
-        chooserBannerDetailLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        chooserBannerDetailLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
         chooserBannerDetailLabel.textColor = NSColor.secondaryLabelColor
         chooserBannerDetailLabel.maximumNumberOfLines = 0
         chooserBannerShortcutsLabel.isEditable = false
         chooserBannerShortcutsLabel.isBordered = false
         chooserBannerShortcutsLabel.drawsBackground = false
         chooserBannerShortcutsLabel.alignment = .center
-        chooserBannerShortcutsLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
+        chooserBannerShortcutsLabel.font = chooserBannerShortcutFont()
         chooserBannerShortcutsLabel.textColor = NSColor.secondaryLabelColor
         chooserBannerShortcutsLabel.maximumNumberOfLines = 0
         chooserBannerSettingsLabel.isEditable = false
         chooserBannerSettingsLabel.isBordered = false
         chooserBannerSettingsLabel.drawsBackground = false
         chooserBannerSettingsLabel.alignment = .center
-        chooserBannerSettingsLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
+        chooserBannerSettingsLabel.font = chooserBannerShortcutFont()
         chooserBannerSettingsLabel.textColor = NSColor.secondaryLabelColor
         chooserBannerSettingsLabel.maximumNumberOfLines = 0
         chooserBannerStack.orientation = .vertical
         chooserBannerStack.alignment = .centerX
-        chooserBannerStack.spacing = 4
+        chooserBannerStack.spacing = 2
         chooserBannerStack.isHidden = true
         chooserBannerArrowKeysLabel.isEditable = false
         chooserBannerArrowKeysLabel.isBordered = false
         chooserBannerArrowKeysLabel.drawsBackground = false
         chooserBannerArrowKeysLabel.alignment = .center
-        chooserBannerArrowKeysLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
+        chooserBannerArrowKeysLabel.font = chooserBannerShortcutFont()
         chooserBannerArrowKeysLabel.textColor = NSColor.secondaryLabelColor
         chooserBannerArrowKeysLabel.maximumNumberOfLines = 0
         chooserBannerStack.setViews([chooserBannerTitleLabel, chooserBannerDetailLabel, chooserBannerShortcutsLabel, chooserBannerSettingsLabel, chooserBannerArrowKeysLabel], in: .top)
@@ -578,8 +578,8 @@ class TilesView {
         searchTabHintLabel.isHidden = false
     }
 
-    private static let chooserBannerSettingsRowHeight: CGFloat = 18
-    private static let chooserBannerArrowKeysRowHeight: CGFloat = 16
+    private static let chooserBannerSettingsRowHeight: CGFloat = 14
+    private static let chooserBannerArrowKeysRowHeight: CGFloat = 12
 
     private static func chooserBannerChromeHeightForLayout() -> CGFloat {
         var base = windowHintMode ? chooserBannerChromeHeightHint : chooserBannerChromeHeightNormal
@@ -603,7 +603,7 @@ class TilesView {
             return
         }
         chooserBannerStack.isHidden = false
-        chooserBannerStack.spacing = 4
+        chooserBannerStack.spacing = 2
         chooserBannerTitleLabel.stringValue = chooserLocalizedTitleForMode(chooserHintMode)
         chooserBannerDetailLabel.stringValue = chooserLocalizedDetailForMode(chooserHintMode)
         chooserBannerShortcutsLabel.attributedStringValue = chooserModeSwitchShortcutsAttributedLine()
@@ -627,7 +627,7 @@ class TilesView {
     }
 
     private static func chooserBannerShortcutFont() -> NSFont {
-        NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
+        NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 2)
     }
 
     private static func chooserLocalizedTitleForMode(_ mode: ChooserHintMode) -> String {

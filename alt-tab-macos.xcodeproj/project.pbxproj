@@ -2038,6 +2038,7 @@
 				D04BA96F3DC99263120BCD21 /* Resources */,
 				5FDF9EB22FB3584300703843 /* Embed Frameworks */,
 				5FDF9EB52FB358C100703843 /* Copy Sparkle Helpers */,
+				A04BB00F1BCDEF012345678B /* Set dev version */,
 			);
 			buildRules = (
 			);
@@ -2195,6 +2196,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "bash \"${SRCROOT}/scripts/inject_build_date_into_info_plist.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		A04BB00F1BCDEF012345678B /* Set dev version */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(BUILT_PRODUCTS_DIR)/$(FULL_PRODUCT_NAME)/Contents/Info.plist",
+			);
+			name = "Set dev version";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/dev-version.stamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "bash \"${SRCROOT}/scripts/set_dev_version_in_info_plist.sh\"\ntouch \"${DERIVED_FILE_DIR}/dev-version.stamp\"\n";
 			showEnvVarsInLog = 0;
 		};
 		5FDF9EB52FB358C100703843 /* Copy Sparkle Helpers */ = {
