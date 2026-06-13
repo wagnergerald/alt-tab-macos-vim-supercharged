@@ -27,17 +27,13 @@ class TilesView {
     private static var cachedEffectViews: [EffectViewKind: EffectView] = [:]
     static var searchField = NSSearchField(frame: NSRect(x: 0, y: 0, width: 320, height: 30))
     static var noWindowLabel = NSTextField(labelWithString: NSLocalizedString("No Window", comment: ""))
-    private static let chooserBannerChromeHeightNormal: CGFloat = 92
-    private static let chooserBannerChromeHeightHint: CGFloat = 84
     private static let hintBannerGapNormal: CGFloat = 4
     private static let hintBannerGapHint: CGFloat = 4
     private static let searchTabHintGap: CGFloat = 8
-    private static let chooserBannerStack = NSStackView()
-    private static var chooserBannerTitleLabel = NSTextField(labelWithString: "")
-    private static var chooserBannerDetailLabel = NSTextField(wrappingLabelWithString: "")
-    private static var chooserBannerShortcutsLabel = NSTextField(wrappingLabelWithString: "")
-    private static var chooserBannerSettingsLabel = NSTextField(wrappingLabelWithString: "")
-    private static var chooserBannerArrowKeysLabel = NSTextField(wrappingLabelWithString: "")
+    private static let chooserBannerLineSeparator = " · "
+    private static let chooserBannerMinHeight: CGFloat = 14
+    private static var chooserBannerCachedHeight: CGFloat = 14
+    private static var chooserBannerLabel = NSTextField(wrappingLabelWithString: "")
     private static var searchTabHintLabel = NSTextField(labelWithString: "")
     static var chooserHintMode: ChooserHintMode = .normal
     static var windowHintMode: Bool { chooserHintMode != .normal }
@@ -414,45 +410,14 @@ class TilesView {
     }
 
     private static func configureHintChrome() {
-        chooserBannerTitleLabel.isEditable = false
-        chooserBannerTitleLabel.isBordered = false
-        chooserBannerTitleLabel.drawsBackground = false
-        chooserBannerTitleLabel.alignment = .center
-        chooserBannerTitleLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize, weight: .semibold)
-        chooserBannerTitleLabel.textColor = NSColor.labelColor
-        chooserBannerDetailLabel.isEditable = false
-        chooserBannerDetailLabel.isBordered = false
-        chooserBannerDetailLabel.drawsBackground = false
-        chooserBannerDetailLabel.alignment = .center
-        chooserBannerDetailLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
-        chooserBannerDetailLabel.textColor = NSColor.secondaryLabelColor
-        chooserBannerDetailLabel.maximumNumberOfLines = 0
-        chooserBannerShortcutsLabel.isEditable = false
-        chooserBannerShortcutsLabel.isBordered = false
-        chooserBannerShortcutsLabel.drawsBackground = false
-        chooserBannerShortcutsLabel.alignment = .center
-        chooserBannerShortcutsLabel.font = chooserBannerShortcutFont()
-        chooserBannerShortcutsLabel.textColor = NSColor.secondaryLabelColor
-        chooserBannerShortcutsLabel.maximumNumberOfLines = 0
-        chooserBannerSettingsLabel.isEditable = false
-        chooserBannerSettingsLabel.isBordered = false
-        chooserBannerSettingsLabel.drawsBackground = false
-        chooserBannerSettingsLabel.alignment = .center
-        chooserBannerSettingsLabel.font = chooserBannerShortcutFont()
-        chooserBannerSettingsLabel.textColor = NSColor.secondaryLabelColor
-        chooserBannerSettingsLabel.maximumNumberOfLines = 0
-        chooserBannerStack.orientation = .vertical
-        chooserBannerStack.alignment = .centerX
-        chooserBannerStack.spacing = 2
-        chooserBannerStack.isHidden = true
-        chooserBannerArrowKeysLabel.isEditable = false
-        chooserBannerArrowKeysLabel.isBordered = false
-        chooserBannerArrowKeysLabel.drawsBackground = false
-        chooserBannerArrowKeysLabel.alignment = .center
-        chooserBannerArrowKeysLabel.font = chooserBannerShortcutFont()
-        chooserBannerArrowKeysLabel.textColor = NSColor.secondaryLabelColor
-        chooserBannerArrowKeysLabel.maximumNumberOfLines = 0
-        chooserBannerStack.setViews([chooserBannerTitleLabel, chooserBannerDetailLabel, chooserBannerShortcutsLabel, chooserBannerSettingsLabel, chooserBannerArrowKeysLabel], in: .top)
+        chooserBannerLabel.isEditable = false
+        chooserBannerLabel.isBordered = false
+        chooserBannerLabel.drawsBackground = false
+        chooserBannerLabel.isSelectable = false
+        chooserBannerLabel.alignment = .center
+        chooserBannerLabel.lineBreakMode = .byWordWrapping
+        chooserBannerLabel.maximumNumberOfLines = 0
+        chooserBannerLabel.isHidden = true
         searchTabHintLabel.isEditable = false
         searchTabHintLabel.isBordered = false
         searchTabHintLabel.drawsBackground = false
@@ -578,52 +543,68 @@ class TilesView {
         searchTabHintLabel.isHidden = false
     }
 
-    private static let chooserBannerSettingsRowHeight: CGFloat = 14
-    private static let chooserBannerArrowKeysRowHeight: CGFloat = 12
-
-    private static func chooserBannerChromeHeightForLayout() -> CGFloat {
-        var base = windowHintMode ? chooserBannerChromeHeightHint : chooserBannerChromeHeightNormal
-        guard Preferences.windowHintsEnabled else { return base }
-        if Preferences.shortcutStyle == .doNothingOnRelease {
-            base += chooserBannerSettingsRowHeight
-        }
-        if Preferences.arrowKeysEnabled {
-            base += chooserBannerArrowKeysRowHeight
-        }
-        return base
+    private static func chooserBannerChromeHeightForLayout(_ width: CGFloat) -> CGFloat {
+        guard Preferences.windowHintsEnabled, width > 0 else { return chooserBannerMinHeight }
+        syncWindowHintsChromeBanners()
+        chooserBannerLabel.preferredMaxLayoutWidth = width
+        let fitH = ceil(chooserBannerLabel.sizeThatFits(NSSize(width: width, height: 10_000)).height)
+        chooserBannerCachedHeight = max(fitH, chooserBannerMinHeight)
+        return chooserBannerCachedHeight
     }
 
     private static func hintBannerGapForLayout() -> CGFloat {
         windowHintMode ? hintBannerGapHint : hintBannerGapNormal
     }
 
+    private static func hintBannerReservedHeight(_ width: CGFloat) -> CGFloat {
+        guard Preferences.windowHintsEnabled else { return 0 }
+        return chooserBannerChromeHeightForLayout(width) + hintBannerGapForLayout()
+    }
+
     private static func syncWindowHintsChromeBanners() {
         guard Preferences.windowHintsEnabled else {
-            chooserBannerStack.isHidden = true
+            chooserBannerLabel.isHidden = true
             return
         }
-        chooserBannerStack.isHidden = false
-        chooserBannerStack.spacing = 2
-        chooserBannerTitleLabel.stringValue = chooserLocalizedTitleForMode(chooserHintMode)
-        chooserBannerDetailLabel.stringValue = chooserLocalizedDetailForMode(chooserHintMode)
-        chooserBannerShortcutsLabel.attributedStringValue = chooserModeSwitchShortcutsAttributedLine()
-        let showSettingsRow = Preferences.shortcutStyle == .doNothingOnRelease
-        chooserBannerSettingsLabel.isHidden = !showSettingsRow
-        let bannerFont = chooserBannerShortcutFont()
-        if showSettingsRow {
+        chooserBannerLabel.isHidden = false
+        chooserBannerLabel.attributedStringValue = chooserBannerCombinedAttributedLine()
+    }
+
+    private static func chooserBannerTitleFont() -> NSFont {
+        NSFont.systemFont(ofSize: NSFont.smallSystemFontSize, weight: .semibold)
+    }
+
+    private static func chooserBannerDetailFont() -> NSFont {
+        NSFont.systemFont(ofSize: NSFont.smallSystemFontSize - 1)
+    }
+
+    private static func chooserBannerCombinedAttributedLine() -> NSAttributedString {
+        let titleFont = chooserBannerTitleFont()
+        let detailFont = chooserBannerDetailFont()
+        let shortcutFont = chooserBannerShortcutFont()
+        var parts = [NSAttributedString]()
+        parts.append(NSAttributedString(string: chooserLocalizedTitleForMode(chooserHintMode), attributes: [.font: titleFont, .foregroundColor: NSColor.labelColor]))
+        parts.append(NSAttributedString(string: chooserLocalizedDetailForMode(chooserHintMode), attributes: [.font: detailFont, .foregroundColor: NSColor.secondaryLabelColor]))
+        let shortcuts = chooserModeSwitchShortcutsAttributedLine()
+        if shortcuts.length > 0 { parts.append(shortcuts) }
+        if Preferences.shortcutStyle == .doNothingOnRelease {
             let d = Preferences.shortcutDisplayString("openSettingsFromSwitcherShortcut").trimmingCharacters(in: .whitespaces)
             let key = d.isEmpty ? "⌘," : d
-            chooserBannerSettingsLabel.attributedStringValue = ChooserBannerShortcutFormatting.attributedShortcutColonDescription(
+            parts.append(ChooserBannerShortcutFormatting.attributedShortcutColonDescription(
                 shortcutDisplay: key,
                 description: NSLocalizedString("chooserMode.settingsShortcutLineDesc", comment: ""),
-                font: bannerFont
-            )
+                font: shortcutFont))
         }
-        let showArrowFooter = Preferences.arrowKeysEnabled
-        chooserBannerArrowKeysLabel.isHidden = !showArrowFooter
-        if showArrowFooter {
-            chooserBannerArrowKeysLabel.stringValue = NSLocalizedString("chooserMode.arrowKeysFooter", comment: "")
+        if Preferences.arrowKeysEnabled {
+            parts.append(NSAttributedString(string: NSLocalizedString("chooserMode.arrowKeysFooter", comment: ""), attributes: [.font: shortcutFont, .foregroundColor: NSColor.secondaryLabelColor]))
         }
+        let joined = ChooserBannerShortcutFormatting.joined(groups: parts, separator: chooserBannerLineSeparator, font: detailFont)
+        let para = NSMutableParagraphStyle()
+        para.alignment = .center
+        para.lineBreakMode = .byWordWrapping
+        let out = NSMutableAttributedString(attributedString: joined)
+        out.addAttribute(.paragraphStyle, value: para, range: NSRange(location: 0, length: out.length))
+        return out
     }
 
     private static func chooserBannerShortcutFont() -> NSFont {
@@ -722,7 +703,7 @@ class TilesView {
             guard !d.isEmpty else { continue }
             groups.append(ChooserBannerShortcutFormatting.attributedShortcutColonDescription(shortcutDisplay: d, description: desc, font: font))
         }
-        return ChooserBannerShortcutFormatting.joined(groups: groups, separator: " · ", font: font)
+        return ChooserBannerShortcutFormatting.joined(groups: groups, separator: chooserBannerLineSeparator, font: font)
     }
 
     /// A title label is always drawn on one line, so its height is a property of the FONT and of nothing
@@ -765,7 +746,7 @@ class TilesView {
         }
         host.addSubview(scrollView)
         host.addSubview(noWindowLabel)
-        host.addSubview(chooserBannerStack)
+        host.addSubview(chooserBannerLabel)
         host.addSubview(searchTabHintLabel)
     }
 
@@ -781,7 +762,7 @@ class TilesView {
         }
         host.addSubview(scrollView)
         host.addSubview(noWindowLabel)
-        host.addSubview(chooserBannerStack)
+        host.addSubview(chooserBannerLabel)
         host.addSubview(searchTabHintLabel)
         contentView = newView
         TilesPanel.shared.contentView = newView
@@ -934,13 +915,8 @@ class TilesView {
         scrollView.reflectScrolledClipView(scrollView.contentView)
     }
 
-    private static func hintBannerReservedHeight() -> CGFloat {
-        guard Preferences.windowHintsEnabled else { return 0 }
-        return chooserBannerChromeHeightForLayout() + hintBannerGapForLayout()
-    }
-
     private static func resolveAutoSize(_ widthMax: CGFloat) {
-        let searchReservedHeight: CGFloat = (searchMode == .off ? 0 : searchBarHeight() + 10) + hintBannerReservedHeight()
+        let searchReservedHeight: CGFloat = (searchMode == .off ? 0 : searchBarHeight() + 10) + hintBannerReservedHeight(widthMax)
         let heightMax = max(0, TilesPanel.maxThumbnailsHeight() - searchReservedHeight)
         _ = TileGridLayout.firstSizeThatFits([AppearanceSizePreference.large, .medium, .small], heightMax: heightMax) { size in
             Appearance.applySize(size)
@@ -1018,7 +994,7 @@ class TilesView {
     private static func layoutParentViews(_ maxX: CGFloat, _ widthMax: CGFloat, _ maxY: CGFloat, _ labelHeight: CGFloat) {
         let searchBarHeight = searchBarHeight()
         let searchBottomPadding = CGFloat(10)
-        let hintReserved = hintBannerReservedHeight()
+        let hintReserved = hintBannerReservedHeight(widthMax)
         let searchRowReserved = searchMode == .off ? 0 : searchBarHeight + searchBottomPadding
         let searchReservedHeight = searchRowReserved + hintReserved
         let heightMax = max(0, TilesPanel.maxThumbnailsHeight() - searchReservedHeight)
@@ -1079,8 +1055,7 @@ class TilesView {
             searchTabHintLabel.isHidden = true
         }
         if showWindowHintsChrome {
-            syncWindowHintsChromeBanners()
-            let bannerH = chooserBannerChromeHeightForLayout()
+            let bannerH = chooserBannerChromeHeightForLayout(TilesView.thumbnailsWidth)
             let bannerGap = hintBannerGapForLayout()
             let bannerY: CGFloat
             if searchMode == .off {
@@ -1089,9 +1064,9 @@ class TilesView {
                 let searchY = frameHeight - Appearance.windowPadding - searchBarHeight - hintReserved
                 bannerY = searchY + searchBarHeight + bannerGap
             }
-            chooserBannerStack.frame = CGRect(x: originX, y: bannerY, width: TilesView.thumbnailsWidth, height: bannerH)
+            chooserBannerLabel.frame = CGRect(x: originX, y: bannerY, width: TilesView.thumbnailsWidth, height: bannerH)
         } else {
-            chooserBannerStack.isHidden = true
+            chooserBannerLabel.isHidden = true
         }
         if searchMode != .off, !Preferences.windowHintsEnabled {
             syncSearchFieldTabHintToolTip()
@@ -1180,9 +1155,8 @@ class TilesView {
         var views = [NSView]()
         if let contentView { views.append(contentView as NSView) }
         views.append(noWindowLabel)
-        views.append(chooserBannerStack)
+        views.append(chooserBannerLabel)
         views.append(searchTabHintLabel)
-        views.append(chooserBannerArrowKeysLabel)
         if let scrollView {
             views.append(scrollView)
             views.append(scrollView.contentView)
