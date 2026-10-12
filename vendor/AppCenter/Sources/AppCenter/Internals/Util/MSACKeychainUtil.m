@@ -2,11 +2,18 @@
 // Licensed under the MIT License.
 
 #import <Foundation/Foundation.h>
+#import <LocalAuthentication/LocalAuthentication.h>
 
 #import "MSACAppCenterInternal.h"
 #import "MSACKeychainUtilPrivate.h"
 #import "MSACLogger.h"
 #import "MSACUtility.h"
+
+static void MSACKeychainDisableAuthUI(NSMutableDictionary *query) {
+  LAContext *context = [LAContext new];
+  context.interactionNotAllowed = YES;
+  query[(__bridge id)kSecUseAuthenticationContext] = context;
+}
 
 @implementation MSACKeychainUtil
 
@@ -94,7 +101,7 @@ static NSString *AppCenterKeychainServiceName(NSString *suffix) {
   NSMutableDictionary *query = [NSMutableDictionary new];
   query[(__bridge id)kSecClass] = (__bridge id)kSecClassGenericPassword;
   query[(__bridge id)kSecAttrService] = AppCenterKeychainServiceName(kMSACServiceSuffix);
-  query[(__bridge id)kSecUseAuthenticationUI] = (__bridge id)kSecUseAuthenticationUIFail;
+  MSACKeychainDisableAuthUI(query);
   OSStatus status = [self deleteSecItem:query];
   return status == noErr;
 }
@@ -104,7 +111,7 @@ static NSString *AppCenterKeychainServiceName(NSString *suffix) {
   item[(__bridge id)kSecClass] = (__bridge id)kSecClassGenericPassword;
   item[(__bridge id)kSecAttrService] = serviceName;
   item[(__bridge id)kSecAttrAccount] = key;
-  item[(__bridge id)kSecUseAuthenticationUI] = (__bridge id)kSecUseAuthenticationUIFail;
+  MSACKeychainDisableAuthUI(item);
   return item;
 }
 
