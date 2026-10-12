@@ -94,6 +94,7 @@ static NSString *AppCenterKeychainServiceName(NSString *suffix) {
   NSMutableDictionary *query = [NSMutableDictionary new];
   query[(__bridge id)kSecClass] = (__bridge id)kSecClassGenericPassword;
   query[(__bridge id)kSecAttrService] = AppCenterKeychainServiceName(kMSACServiceSuffix);
+  query[(__bridge id)kSecUseAuthenticationUI] = (__bridge id)kSecUseAuthenticationUIFail;
   OSStatus status = [self deleteSecItem:query];
   return status == noErr;
 }
@@ -103,6 +104,7 @@ static NSString *AppCenterKeychainServiceName(NSString *suffix) {
   item[(__bridge id)kSecClass] = (__bridge id)kSecClassGenericPassword;
   item[(__bridge id)kSecAttrService] = serviceName;
   item[(__bridge id)kSecAttrAccount] = key;
+  item[(__bridge id)kSecUseAuthenticationUI] = (__bridge id)kSecUseAuthenticationUIFail;
   return item;
 }
 

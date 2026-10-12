@@ -15,7 +15,7 @@ class LicenseManager {
     }
 
     static let shared: LicenseManager = {
-        let keychain = SystemKeychain(service: keychainService)
+        let keychain = makeKeychain()
         return LicenseManager(
             clock: SystemClock(),
             keychain: keychain,
@@ -23,6 +23,14 @@ class LicenseManager {
             defaults: UserDefaults(suiteName: defaultsSuiteName)!
         )
     }()
+
+    static func makeKeychain() -> Keychain {
+        #if DEBUG
+        UserDefaultsKeychain(suiteName: defaultsSuiteName)
+        #else
+        SystemKeychain(service: keychainService)
+        #endif
+    }
 
     static let trialDuration = 14
     private static let revalidationInterval: TimeInterval = 30 * 24 * 60 * 60 // 30 days
