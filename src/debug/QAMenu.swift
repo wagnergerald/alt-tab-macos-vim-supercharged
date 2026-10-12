@@ -120,7 +120,9 @@ final class QAMenu: NSPanel {
         UserDefaults.standard.removePersistentDomain(forName: App.bundleIdentifier)
         UserDefaults.standard.removePersistentDomain(forName: LicenseManager.defaultsSuiteName)
         UserDefaults.standard.removePersistentDomain(forName: "\(App.bundleIdentifier).usage")
+        #if !DEBUG
         SystemKeychain(service: LicenseManager.keychainService).removeAll()
+        #endif
     }
 
     // MARK: - Trial journey
