@@ -1,4 +1,5 @@
 import Foundation
+import LocalAuthentication
 import Security
 
 protocol Keychain {
@@ -60,7 +61,7 @@ struct SystemKeychain: Keychain {
     /// authorization, so a differently-signed build (a local dev build next to a released one: same bundle
     /// id, same service) would silently overwrite the real license and leave the item unreadable to both.
     /// Letting `SecItemAdd` fail with `errSecDuplicateItem` keeps that visible, as it was before.
-    /// Queries use `kSecUseAuthenticationUIFail` so a signature mismatch never presents the Keychain
+    /// Queries set `LAContext.interactionNotAllowed` so a signature mismatch never presents the Keychain
     /// "wants to use confidential information" dialog (local self-signed certs rotate often).
     @discardableResult
     func setValue(_ value: String, account: String) -> OSStatus {
@@ -96,10 +97,12 @@ struct SystemKeychain: Keychain {
     }
 
     private func baseQuery(account: String?, returningData: Bool = false) -> [String: Any] {
+        let context = LAContext()
+        context.interactionNotAllowed = true
         var q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecUseAuthenticationUI as String: kSecUseAuthenticationUIFail,
+            kSecUseAuthenticationContext as String: context,
         ]
         if let account { q[kSecAttrAccount as String] = account }
         if returningData { q[kSecReturnData as String] = true }

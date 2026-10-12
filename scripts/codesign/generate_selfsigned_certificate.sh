@@ -27,7 +27,8 @@ openssl req -x509 -new -config $certificateFile.conf -nodes -key $certificateFil
 openssl_version=$(openssl version)
 # openssl v3.x requires to pass -legacy
 # see https://www.misterpki.com/openssl-pkcs12-legacy/
-if [[ $openssl_version == OpenSSL\ 3* ]]; then
+# OpenSSL 3+ / 4+ default PKCS#12 algorithms are rejected by macOS `security import`.
+if [[ $openssl_version == OpenSSL\ 3* || $openssl_version == OpenSSL\ 4* ]]; then
   flag="-legacy"
 else
   flag=""
