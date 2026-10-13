@@ -333,6 +333,23 @@ extension AXUIElement {
         try throwIfNotSuccess(AXUIElementSetAttributeValue(self, key as CFString, value as CFTypeRef))
     }
 
+    func setPosition(_ point: CGPoint) throws {
+        var value = point
+        guard let axValue = AXValueCreate(.cgPoint, &value) else { throw AxError.noAnswer }
+        try setAttribute(kAXPositionAttribute, axValue)
+    }
+
+    func setSize(_ size: CGSize) throws {
+        var value = size
+        guard let axValue = AXValueCreate(.cgSize, &value) else { throw AxError.noAnswer }
+        try setAttribute(kAXSizeAttribute, axValue)
+    }
+
+    func setFrame(_ frame: CGRect) throws {
+        try setSize(frame.size)
+        try setPosition(frame.origin)
+    }
+
     func performAction(_ action: String) throws {
         try throwIfNotSuccess(AXUIElementPerformAction(self, action as CFString))
     }

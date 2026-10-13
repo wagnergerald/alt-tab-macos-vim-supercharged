@@ -348,8 +348,56 @@ class Window {
         }
     }
 
+    /// Move/resize to a Quartz top-left frame (same space as `position` / AX attributes). Best-effort:
+    /// exits fullscreen/minimized first when needed, mirroring `minDemin`.
+    func setFrame(_ quartzFrame: CGRect) {
+        guard canBeMinDeminOrFullscreened() else {
+            NSSound.beep()
+            return
+        }
+        if let altTabWindow = altTabWindow() {
+            applyAppKitFrame(quartzFrame, to: altTabWindow)
+            return
+        }
+        guard let element = axUiElement else { return }
+        let wasFullscreen = self.isFullscreen
+        let wasMinimized = self.isMinimized
+        BackgroundWork.accessibilityCommandsQueue.addOperation { [weak self] in
+            guard self != nil else { return }
+            Self.applyAxFrame(quartzFrame, element: element, wasFullscreen: wasFullscreen, wasMinimized: wasMinimized)
+        }
+    }
+
+    private func applyAppKitFrame(_ quartzFrame: CGRect, to altTabWindow: NSWindow) {
+        let mainMaxY = NSMaxY(NSScreen.screens[0].frame)
+        let appKitFrame = CGRect(
+            x: quartzFrame.origin.x,
+            y: mainMaxY - quartzFrame.origin.y - quartzFrame.height,
+            width: quartzFrame.width,
+            height: quartzFrame.height)
+        altTabWindow.setFrame(appKitFrame, display: true)
+    }
+
+    /// Must run on `accessibilityCommandsQueue`. Fullscreen exit may schedule the actual frame write later.
+    private static func applyAxFrame(_ quartzFrame: CGRect, element: AXUIElement, wasFullscreen: Bool, wasMinimized: Bool) {
+        if wasFullscreen {
+            try? element.setAttribute(kAXFullscreenAttribute, false)
+            BackgroundWork.accessibilityCommandsQueue.addOperationAfter(deadline: .now() + .seconds(1)) {
+                if wasMinimized { try? element.setAttribute(kAXMinimizedAttribute, false) }
+                try? element.setFrame(quartzFrame)
+            }
+            return
+        }
+        if wasMinimized {
+            try? element.setAttribute(kAXMinimizedAttribute, false)
+        }
+        try? element.setFrame(quartzFrame)
+    }
+
     /// `onFronted` runs on main once step 1 has fronted the target (see `TilesPanel.orderOutOnceFronted`).
-    func focus(_ onFronted: @escaping () -> Void = {}) {
+    /// `thenSetFrame` is applied on the AX queue *after* fronting, so keyboard handoff is not queued behind
+    /// a resize (snap layouts used to call `setFrame` then `focus`, and a fullscreen exit could delay makeKey by 1s+).
+    func focus(_ onFronted: @escaping () -> Void = {}, thenSetFrame quartzFrame: CGRect? = nil) {
         MainThreadStall.step()
         if let altTabWindow = altTabWindow() {
             // Our windows are only ordered out when closed, and stay listed until the phantom verdict lands.
@@ -358,7 +406,9 @@ class Window {
             FocusIntents.shared.supersede()
             App.shared.activate(ignoringOtherApps: true)
             altTabWindow.makeKeyAndOrderFront(nil)
+            if let quartzFrame { applyAppKitFrame(quartzFrame, to: altTabWindow) }
             WindowThumbnails.previewSelectedIfNeeded()
+            onFronted()
         } else if self.isWindowlessApp || cgWindowId == nil {
             FocusIntents.shared.supersede()
             if let bundleUrl = application.bundleURL, self.isWindowlessApp {
@@ -372,6 +422,7 @@ class Window {
                 application.runningApplication.activate(options: .activateAllWindows)
             }
             WindowThumbnails.previewSelectedIfNeeded()
+            onFronted()
         } else {
             // macOS bug: when switching to a System Preferences window in another space, it switches to that space,
             // but quickly switches back to another window in that space
@@ -389,8 +440,13 @@ class Window {
             let originFrontPid = targetMaybeCrossSpace
                 ? NSWorkspace.shared.frontmostApplication.flatMap(Applications.knownPid) : nil
             let target: FocusTarget = (cgWindowId!, application.pid, axUiElement, self.isMinimized)
+            let wasFullscreen = self.isFullscreen
+            let wasMinimized = self.isMinimized
             BackgroundWork.accessibilityCommandsQueue.addOperation { [weak self] in
                 self?.applyFocus(target, generation, originSpaceId, originFrontPid, onFronted)
+                guard let quartzFrame, let element = target.element else { return }
+                guard FocusIntents.shared.mayProceed(generation) else { return }
+                Self.applyAxFrame(quartzFrame, element: element, wasFullscreen: wasFullscreen, wasMinimized: wasMinimized)
             }
         }
     }

@@ -6,6 +6,7 @@ class ShortcutsWhenActiveSheet: SheetWindow {
     // Row titles come from `ControlsTab.staticShortcutLabels` (single source of truth, also used by
     // the conflict dialog to name these actions).
     private static let labelFocus = ControlsTab.staticShortcutLabels["focusWindowShortcut"]!
+    private static let labelFocusAndSnap = ControlsTab.staticShortcutLabels["focusAndSnapWindowShortcut"]!
     private static let labelPrevious = ControlsTab.staticShortcutLabels["previousWindowShortcut"]!
     private static let labelCancel = ControlsTab.staticShortcutLabels["cancelShortcut"]!
     private static let labelSearch = ControlsTab.staticShortcutLabels["searchShortcut"]!
@@ -26,7 +27,7 @@ class ShortcutsWhenActiveSheet: SheetWindow {
     /// `ProBadgeView.proLabel` contributes the "Pro" tag rendered on the search row.
     static let searchableStrings: [String] = [
         title,
-        labelFocus, labelPrevious, labelCancel, labelEnterHintMode, labelOpenSettings,
+        labelFocus, labelFocusAndSnap, labelPrevious, labelCancel, labelEnterHintMode, labelOpenSettings,
         labelSearch, labelSearchHint,
         labelClose, labelMinDemin, labelFullscreen, labelQuit, labelHideShow,
         labelVimLeft, labelVimRight, labelVimUp, labelVimDown,
@@ -38,6 +39,9 @@ class ShortcutsWhenActiveSheet: SheetWindow {
         let focusWindowShortcut = TableGroupView.Row(leftTitle: Self.labelFocus,
             subTitle: NSLocalizedString("shortcutsWhenActive.focusWindowSubtitle", comment: ""),
             rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelFocus, "focusWindowShortcut", Preferences.focusWindowShortcut, labelPosition: .right)[0]])
+        let focusAndSnapWindowShortcut = TableGroupView.Row(leftTitle: Self.labelFocusAndSnap,
+            subTitle: NSLocalizedString("snapLayout.focusAndSnapSubtitle", comment: ""),
+            rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelFocusAndSnap, "focusAndSnapWindowShortcut", Preferences.focusAndSnapWindowShortcut, labelPosition: .right)[0]])
         let previousWindowShortcut = TableGroupView.Row(leftTitle: Self.labelPrevious,
             rightViews: [LabelAndControl.makeLabelWithRecorder(Self.labelPrevious, "previousWindowShortcut", Preferences.previousWindowShortcut, labelPosition: .right)[0]])
         let cancelShortcut = TableGroupView.Row(leftTitle: Self.labelCancel,
@@ -56,6 +60,7 @@ class ShortcutsWhenActiveSheet: SheetWindow {
             subTitle: NSLocalizedString("shortcutsWhenActive.tableSubtitle", comment: ""),
             width: SheetWindow.width)
         _ = table.addRow(focusWindowShortcut)
+        _ = table.addRow(focusAndSnapWindowShortcut)
         _ = table.addRow(previousWindowShortcut)
         _ = table.addRow(cancelShortcut)
         _ = table.addRow(enterHintModeFromNormalShortcut)

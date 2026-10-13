@@ -49,6 +49,7 @@ class TilesView {
     static var layoutCache = LayoutCache()
     static var thumbnailUnderLayer = TileUnderLayer()
     static var thumbnailOverView = TileOverView()
+    private static var snapLayoutPanel = SnapLayoutPanelView(frame: .zero)
     private static var initialized = false
 
     static func initialize() {
@@ -56,10 +57,51 @@ class TilesView {
         configureSearchField()
         configureNoWindowLabel()
         configureHintChrome()
+        snapLayoutPanel.isHidden = true
         updateBackgroundView()
         initialized = true
         growPoolToCoverWindows()
         Self.updateCachedSizes()
+    }
+
+    static func showSnapLayoutPanel() {
+        guard contentView != nil else { return }
+        let host = contentView.hostView
+        if snapLayoutPanel.superview !== host {
+            host.addSubview(snapLayoutPanel)
+        }
+        snapLayoutPanel.reload(fontColor: Appearance.fontColor)
+        snapLayoutPanel.isHidden = false
+        layoutSnapLayoutPanel()
+        scrollView?.isHidden = true
+        noWindowLabel.isHidden = true
+        updateChooserBannerForSnapMode()
+    }
+
+    static func hideSnapLayoutPanel() {
+        snapLayoutPanel.isHidden = true
+        snapLayoutPanel.removeFromSuperview()
+        scrollView?.isHidden = false
+        syncWindowHintsChromeBanners()
+    }
+
+    private static func layoutSnapLayoutPanel() {
+        guard !snapLayoutPanel.isHidden, let scrollView else { return }
+        snapLayoutPanel.frame = scrollView.frame
+    }
+
+    private static func updateChooserBannerForSnapMode() {
+        guard Preferences.windowHintsEnabled else { return }
+        chooserBannerLabel.isHidden = false
+        let title = NSLocalizedString("snapLayout.bannerTitle", comment: "")
+        let detail = NSLocalizedString("snapLayout.bannerDetail", comment: "")
+        let result = NSMutableAttributedString(
+            string: title + " ",
+            attributes: [.font: chooserBannerTitleFont(), .foregroundColor: Appearance.fontColor])
+        result.append(NSAttributedString(
+            string: detail,
+            attributes: [.font: chooserBannerDetailFont(), .foregroundColor: Appearance.fontColor.withAlphaComponent(0.85)]))
+        chooserBannerLabel.attributedStringValue = result
     }
 
     static func growPoolToCoverWindows() {
@@ -150,18 +192,23 @@ class TilesView {
         }
         let blocked = event.modifierFlags.intersection([.option, .command, .control])
         if !blocked.isEmpty { return false }
-        guard let ch = keyCharacterForWindowHint(event) else { return false }
-        guard WindowHintLabels.isHintCharacter(ch) else { return false }
-        return processWindowHintCharacter(ch)
+        guard let parsed = keyCharacterForWindowHint(event) else { return false }
+        guard WindowHintLabels.isHintCharacter(parsed.ch) else { return false }
+        return processWindowHintCharacter(parsed.ch, enterSnapOnActivate: parsed.wantsSnap)
     }
 
-    private static func keyCharacterForWindowHint(_ event: NSEvent) -> String? {
-        let s = event.charactersIgnoringModifiers ?? event.characters ?? ""
-        guard let first = s.first else { return nil }
-        return String(first).lowercased()
+    /// Hint labels are lowercase. Uppercase typing (Shift or Caps Lock producing an uppercase letter)
+    /// still targets the same label, but completing the hint opens the snap layout panel instead of focusing.
+    private static func keyCharacterForWindowHint(_ event: NSEvent) -> (ch: String, wantsSnap: Bool)? {
+        let ignoring = event.charactersIgnoringModifiers ?? event.characters ?? ""
+        guard let first = ignoring.first else { return nil }
+        let ch = String(first).lowercased()
+        let produced = event.characters ?? ""
+        let wantsSnap = produced.first.map { $0.isLetter && $0.isUppercase } ?? false
+        return (ch, wantsSnap)
     }
 
-    private static func processWindowHintCharacter(_ ch: String) -> Bool {
+    private static func processWindowHintCharacter(_ ch: String, enterSnapOnActivate: Bool) -> Bool {
         let newBuffer = windowHintKeyBuffer + ch
         let matches = (0..<Windows.list.count).filter { i in
             let label = i < windowHintLabelAtIndex.count ? windowHintLabelAtIndex[i] : ""
@@ -174,7 +221,7 @@ class TilesView {
                 return !label.isEmpty && label.hasPrefix(windowHintKeyBuffer)
             }
             if retry.count == 1, retry[0] < windowHintLabelAtIndex.count, windowHintLabelAtIndex[retry[0]] == windowHintKeyBuffer {
-                activateWindowFromHint(retry[0])
+                activateWindowFromHint(retry[0], enterSnap: enterSnapOnActivate)
                 return true
             }
             if retry.isEmpty {
@@ -185,18 +232,22 @@ class TilesView {
         }
         windowHintKeyBuffer = newBuffer
         if matches.count == 1, matches[0] < windowHintLabelAtIndex.count, windowHintLabelAtIndex[matches[0]] == windowHintKeyBuffer {
-            activateWindowFromHint(matches[0])
+            activateWindowFromHint(matches[0], enterSnap: enterSnapOnActivate)
             return true
         }
         return true
     }
 
-    private static func activateWindowFromHint(_ index: Int) {
+    private static func activateWindowFromHint(_ index: Int, enterSnap: Bool = false) {
         windowHintKeyBuffer = ""
         Windows.updateSelectedAndHoveredWindowIndex(index)
         switch chooserHintMode {
         case .normal, .focusHints:
-            App.focusSelectedWindow(Windows.selectedWindow())
+            if enterSnap {
+                App.enterSnapLayoutMode()
+            } else {
+                App.focusSelectedWindow(Windows.selectedWindow())
+            }
         case .minimizeHints:
             App.minDeminSelectedWindow()
             App.refreshUi(true)
@@ -748,6 +799,9 @@ class TilesView {
         host.addSubview(noWindowLabel)
         host.addSubview(chooserBannerLabel)
         host.addSubview(searchTabHintLabel)
+        if SnapSession.isActive {
+            host.addSubview(snapLayoutPanel)
+        }
     }
 
     static func swapBackgroundViewIfNeeded() {
@@ -764,6 +818,9 @@ class TilesView {
         host.addSubview(noWindowLabel)
         host.addSubview(chooserBannerLabel)
         host.addSubview(searchTabHintLabel)
+        if SnapSession.isActive {
+            host.addSubview(snapLayoutPanel)
+        }
         contentView = newView
         TilesPanel.shared.contentView = newView
     }
@@ -1086,6 +1143,12 @@ class TilesView {
             let labelX = originX + (TilesView.thumbnailsWidth - noWindowLabel.frame.width) * 0.5
             let labelY = scrollView.frame.origin.y + (scrollView.frame.height - noWindowLabel.frame.height) * 0.5
             noWindowLabel.frame.origin = CGPoint(x: labelX, y: labelY)
+        }
+        if SnapSession.isActive {
+            scrollView.isHidden = true
+            noWindowLabel.isHidden = true
+            layoutSnapLayoutPanel()
+            updateChooserBannerForSnapMode()
         }
     }
 
