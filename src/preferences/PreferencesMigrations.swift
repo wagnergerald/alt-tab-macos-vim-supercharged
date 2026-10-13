@@ -12,6 +12,14 @@ class PreferencesMigrations {
                 Self.defaults.removeObject(forKey: $0)
             }
         }
+        // Snap layouts shipped briefly with digit defaults (1–7); drop those so vim-letter registered defaults apply.
+        let digitDefaults: Set<String> = ["1", "2", "3", "4", "5", "6", "7"]
+        for key in SnapLayout.allPreferenceKeys {
+            guard let object = Self.defaults.object(forKey: key) as? [String: Any],
+                  let s = object["string"] as? String,
+                  digitDefaults.contains(s) else { continue }
+            Self.defaults.removeObject(forKey: key)
+        }
     }
 
     static func migratePreferences() {

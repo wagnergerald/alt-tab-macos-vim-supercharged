@@ -8,6 +8,7 @@ class Preferences {
             "shortcutCount": "2",
             "nextWindowGesture": GesturePreference.disabled.indexAsString,
             "focusWindowShortcut": defaultShortcut("Space"),
+            "focusAndSnapWindowShortcut": defaultShortcut(returnKeyEquivalent()),
             "previousWindowShortcut": defaultShortcut("⇧"),
             "cancelShortcut": defaultShortcut("⎋"),
             "closeWindowShortcut": defaultShortcut("⌃C"),
@@ -24,6 +25,13 @@ class Preferences {
             "vimCycleRight": defaultShortcut("l"),
             "vimCycleUp": defaultShortcut("k"),
             "vimCycleDown": defaultShortcut("j"),
+            "snapLayoutLeftHalfShortcut": defaultShortcut("h"),
+            "snapLayoutRightHalfShortcut": defaultShortcut("l"),
+            "snapLayoutCenterHalfShortcut": defaultShortcut("k"),
+            "snapLayoutCenterTwoThirdsShortcut": defaultShortcut("j"),
+            "snapLayoutLeftThirdShortcut": defaultShortcut("u"),
+            "snapLayoutCenterThirdShortcut": defaultShortcut("i"),
+            "snapLayoutRightThirdShortcut": defaultShortcut("o"),
             "arrowKeysEnabled": "true",
             "vimKeysEnabled": "true",
             "windowHintsEnabled": "true",
@@ -89,11 +97,11 @@ class Preferences {
         UserDefaults(suiteName: "com.apple.Finder")?.bool(forKey: "QuitMenuItem") ?? false
     }
     static let staticShortcutKeys = [
-        "focusWindowShortcut", "previousWindowShortcut", "cancelShortcut", "closeWindowShortcut",
+        "focusWindowShortcut", "focusAndSnapWindowShortcut", "previousWindowShortcut", "cancelShortcut", "closeWindowShortcut",
         "minDeminWindowShortcut", "toggleFullscreenWindowShortcut", "quitAppShortcut", "hideShowAppShortcut", "searchShortcut",
         "dismissSwitcherShortcut", "enterHintModeFromNormalShortcut", "openSettingsFromSwitcherShortcut",
         "vimCycleLeft", "vimCycleRight", "vimCycleUp", "vimCycleDown",
-    ]
+    ] + SnapLayout.allPreferenceKeys
     static let emptyShortcut = Shortcut(code: .none, modifierFlags: [], characters: nil, charactersIgnoringModifiers: nil)
     private static let shortcutStorageStringField = "string"
     private static let shortcutStorageDataField = "secureData"
@@ -103,6 +111,7 @@ class Preferences {
     static var nextWindowShortcut: [Shortcut?] { (0..<shortcutCount).map { CachedUserDefaults.shortcut(indexToName("nextWindowShortcut", $0)) } }
     static var nextWindowGesture: GesturePreference { CachedUserDefaults.macroPref("nextWindowGesture", GesturePreference.allCases) }
     static var focusWindowShortcut: Shortcut? { CachedUserDefaults.shortcut("focusWindowShortcut") }
+    static var focusAndSnapWindowShortcut: Shortcut? { CachedUserDefaults.shortcut("focusAndSnapWindowShortcut") }
     static var previousWindowShortcut: Shortcut? { CachedUserDefaults.shortcut("previousWindowShortcut") }
     static var cancelShortcut: Shortcut? { CachedUserDefaults.shortcut("cancelShortcut") }
     static var closeWindowShortcut: Shortcut? { CachedUserDefaults.shortcut("closeWindowShortcut") }

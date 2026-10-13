@@ -35,55 +35,92 @@ enum ShortcutActions {
         TilesView.switchToHintMode(mode)
     }
 
-    static let all: [ShortcutAction] = [
-        ShortcutAction(id: "focusWindowShortcut", perform: {
-            if !Preferences.windowHintsEnabled {
-                App.focusTarget()
-                return
-            }
-            runFocusShortcutActionForCurrentHintMode()
-        }),
-        ShortcutAction(id: "enterHintModeFromNormalShortcut", perform: {
-            guard Preferences.windowHintsEnabled else { return }
-            switch TilesView.chooserHintMode {
-            case .normal, .minimizeHints, .closeHints, .quitHints, .hideHints:
-                TilesView.switchToHintMode(.focusHints)
-            default:
-                break
-            }
-        }),
-        ShortcutAction(id: "openSettingsFromSwitcherShortcut", perform: { App.showSettingsWindow() }),
-        ShortcutAction(id: "previousWindowShortcut", perform: { App.previousWindowShortcutWithRepeatingKey() }),
-        ShortcutAction(id: "→", perform: { App.cycleSelection(.right) }),
-        ShortcutAction(id: "←", perform: { App.cycleSelection(.left) }),
-        ShortcutAction(id: "↑", perform: { App.cycleSelection(.up) }),
-        ShortcutAction(id: "↓", perform: { App.cycleSelection(.down) }),
-        ShortcutAction(id: "vimCycleRight", perform: { App.cycleSelection(.right) }),
-        ShortcutAction(id: "vimCycleLeft", perform: { App.cycleSelection(.left) }),
-        ShortcutAction(id: "vimCycleUp", perform: { App.cycleSelection(.up) }),
-        ShortcutAction(id: "vimCycleDown", perform: { App.cycleSelection(.down) }),
-        ShortcutAction(id: "cancelShortcut", perform: {
-            guard let session = SwitcherSession.current else { return }
-            let entry: SearchEntryStyle = Preferences.effectiveShortcutStyle(session.shortcutIndex) == .searchOnRelease ? .startedInSearch : .toggledMidSession
-            switch SearchModeResolver.escape(mode: TilesView.searchMode, entry: entry) {
-                case .exitSearch: TilesView.disableSearchMode()
-                case .closeSwitcher: App.hideUi()
-            }
-        }),
-        ShortcutAction(id: "closeWindowShortcut", perform: { enterHintModeOrRun(.closeHints) { onSelectedWindow(closesOneTab: true) { $0.close() } } }),
-        ShortcutAction(id: "minDeminWindowShortcut", perform: { enterHintModeOrRun(.minimizeHints) { onSelectedWindow { $0.minDemin() } } }),
-        ShortcutAction(id: "toggleFullscreenWindowShortcut", perform: { enterHintModeOrRun(.fullscreenHints) { onSelectedWindow { $0.toggleFullscreen() } } }),
-        ShortcutAction(id: "quitAppShortcut", perform: { enterHintModeOrRun(.quitHints) { onSelectedWindow { $0.application.quit() } } }),
-        ShortcutAction(id: "hideShowAppShortcut", perform: { enterHintModeOrRun(.hideHints) { onSelectedWindow { $0.application.hideOrShow() } } }),
-        ShortcutAction(id: "searchShortcut", perform: {
-            guard SwitcherSession.isActive else { return }
-            TilesView.toggleSearchModeFromShortcut()
-        }),
-        ShortcutAction(id: "dismissSwitcherShortcut", perform: {
-            guard !Preferences.windowHintsEnabled || TilesView.windowHintMode else { return }
-            App.hideUi()
-        }),
-    ]
+    static let all: [ShortcutAction] = {
+        var actions: [ShortcutAction] = [
+            ShortcutAction(id: "focusWindowShortcut", perform: {
+                if SnapSession.isActive {
+                    App.focusSnapTargetWithoutResizing()
+                    return
+                }
+                if !Preferences.windowHintsEnabled {
+                    App.focusTarget()
+                    return
+                }
+                runFocusShortcutActionForCurrentHintMode()
+            }),
+            ShortcutAction(id: "focusAndSnapWindowShortcut", perform: { App.enterSnapLayoutMode() }),
+            ShortcutAction(id: "enterHintModeFromNormalShortcut", perform: {
+                guard !SnapSession.isActive else { return }
+                guard Preferences.windowHintsEnabled else { return }
+                switch TilesView.chooserHintMode {
+                case .normal, .minimizeHints, .closeHints, .quitHints, .hideHints:
+                    TilesView.switchToHintMode(.focusHints)
+                default:
+                    break
+                }
+            }),
+            ShortcutAction(id: "openSettingsFromSwitcherShortcut", perform: { App.showSettingsWindow() }),
+            ShortcutAction(id: "previousWindowShortcut", perform: {
+                guard !SnapSession.isActive else { return }
+                App.previousWindowShortcutWithRepeatingKey()
+            }),
+            ShortcutAction(id: "→", perform: { guard !SnapSession.isActive else { return }; App.cycleSelection(.right) }),
+            ShortcutAction(id: "←", perform: { guard !SnapSession.isActive else { return }; App.cycleSelection(.left) }),
+            ShortcutAction(id: "↑", perform: { guard !SnapSession.isActive else { return }; App.cycleSelection(.up) }),
+            ShortcutAction(id: "↓", perform: { guard !SnapSession.isActive else { return }; App.cycleSelection(.down) }),
+            ShortcutAction(id: "vimCycleRight", perform: { guard !SnapSession.isActive else { return }; App.cycleSelection(.right) }),
+            ShortcutAction(id: "vimCycleLeft", perform: { guard !SnapSession.isActive else { return }; App.cycleSelection(.left) }),
+            ShortcutAction(id: "vimCycleUp", perform: { guard !SnapSession.isActive else { return }; App.cycleSelection(.up) }),
+            ShortcutAction(id: "vimCycleDown", perform: { guard !SnapSession.isActive else { return }; App.cycleSelection(.down) }),
+            ShortcutAction(id: "cancelShortcut", perform: {
+                guard let session = SwitcherSession.current else { return }
+                if SnapSession.isActive {
+                    App.hideUi()
+                    return
+                }
+                let entry: SearchEntryStyle = Preferences.effectiveShortcutStyle(session.shortcutIndex) == .searchOnRelease ? .startedInSearch : .toggledMidSession
+                switch SearchModeResolver.escape(mode: TilesView.searchMode, entry: entry) {
+                    case .exitSearch: TilesView.disableSearchMode()
+                    case .closeSwitcher: App.hideUi()
+                }
+            }),
+            ShortcutAction(id: "closeWindowShortcut", perform: {
+                guard !SnapSession.isActive else { return }
+                enterHintModeOrRun(.closeHints) { onSelectedWindow(closesOneTab: true) { $0.close() } }
+            }),
+            ShortcutAction(id: "minDeminWindowShortcut", perform: {
+                guard !SnapSession.isActive else { return }
+                enterHintModeOrRun(.minimizeHints) { onSelectedWindow { $0.minDemin() } }
+            }),
+            ShortcutAction(id: "toggleFullscreenWindowShortcut", perform: {
+                guard !SnapSession.isActive else { return }
+                enterHintModeOrRun(.fullscreenHints) { onSelectedWindow { $0.toggleFullscreen() } }
+            }),
+            ShortcutAction(id: "quitAppShortcut", perform: {
+                guard !SnapSession.isActive else { return }
+                enterHintModeOrRun(.quitHints) { onSelectedWindow { $0.application.quit() } }
+            }),
+            ShortcutAction(id: "hideShowAppShortcut", perform: {
+                guard !SnapSession.isActive else { return }
+                enterHintModeOrRun(.hideHints) { onSelectedWindow { $0.application.hideOrShow() } }
+            }),
+            ShortcutAction(id: "searchShortcut", perform: {
+                guard SwitcherSession.isActive, !SnapSession.isActive else { return }
+                TilesView.toggleSearchModeFromShortcut()
+            }),
+            ShortcutAction(id: "dismissSwitcherShortcut", perform: {
+                guard !Preferences.windowHintsEnabled || TilesView.windowHintMode || SnapSession.isActive else { return }
+                App.hideUi()
+            }),
+        ]
+        for layout in SnapLayout.allCases {
+            let captured = layout
+            actions.append(ShortcutAction(id: captured.preferenceKey, perform: {
+                App.applySnapLayout(captured)
+            }))
+        }
+        return actions
+    }()
 
     /// Acting on a tile is a commitment to THAT window, so from here the selection follows it by id rather
     /// than being re-derived as the default pick. Every one of these actions reorders the list under the
