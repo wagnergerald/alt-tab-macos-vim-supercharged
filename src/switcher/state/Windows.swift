@@ -77,14 +77,22 @@ class Windows {
         sort()
     }
 
+    private static var voiceOverGeneration = 0
+
     static func voiceOverWindow(_ windowIndex: Int = (SwitcherSession.current?.selectedIndex ?? 0)) {
         guard SwitcherSession.isActive && TilesPanel.shared.isKeyWindow else { return }
         if TilesView.isSearchEditing { return }
         // it seems that sometimes makeFirstResponder is called before the view is visible
         // and it creates a delay in showing the main window; calling it with some delay seems to work around this
+        // Coalesce: rapid Tab schedules many of these; only the latest index should run.
+        voiceOverGeneration &+= 1
+        let generation = voiceOverGeneration
+        let index = windowIndex
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(10)) {
+            guard generation == voiceOverGeneration else { return }
             if TilesView.isSearchEditing { return }
-            let window = TilesView.recycledViews[windowIndex]
+            guard index < TilesView.recycledViews.count else { return }
+            let window = TilesView.recycledViews[index]
             if window.window_ != nil && window.window != nil {
                 TilesPanel.shared.makeFirstResponder(window)
             }

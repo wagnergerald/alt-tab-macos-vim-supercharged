@@ -74,6 +74,7 @@ enum SettingsSearchIndex {
         if action == #selector(AppearanceTab.showCustomizeStyleSheet) { return CustomizeStyleSheet.searchableStrings }
         if action == #selector(AppearanceTab.showAnimationsSheet) { return AnimationsSheet.searchableStrings }
         if action == #selector(ControlsTab.showShortcutsSettings) { return ShortcutsWhenActiveSheet.searchableStrings }
+        if action == #selector(ControlsTab.showSnapLayoutsSettings) { return SnapLayoutsSheet.searchableStrings }
         if action == #selector(ControlsTab.showAdditionalControlsSettings) { return AdditionalControlsSheet.searchableStrings }
         return nil
     }

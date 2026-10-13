@@ -87,6 +87,13 @@
 		5E6010B00000000000000002 /* TileGridLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E6010B00000000000000001 /* TileGridLayout.swift */; };
 		5E6010B00000000000000003 /* TileGridLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E6010B00000000000000001 /* TileGridLayout.swift */; };
 		5E6010B00000000000000102 /* TileGridLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E6010B00000000000000101 /* TileGridLayoutTests.swift */; };
+		SNAP01000000000000000002 /* SnapLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000001 /* SnapLayout.swift */; };
+		SNAP01000000000000000003 /* SnapLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000001 /* SnapLayout.swift */; };
+		SNAP01000000000000000012 /* SnapLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000011 /* SnapLayoutTests.swift */; };
+		SNAP01000000000000000032 /* SnapLayoutPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000031 /* SnapLayoutPanelView.swift */; };
+		SNAP01000000000000000042 /* SnapSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000041 /* SnapSession.swift */; };
+		SNAP01000000000000000052 /* SnapLayoutGlyphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000051 /* SnapLayoutGlyphView.swift */; };
+		SNAP01000000000000000062 /* SnapLayoutsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000061 /* SnapLayoutsSheet.swift */; };
 		5E7115000000000000000002 /* TilePool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7115000000000000000001 /* TilePool.swift */; };
 		5E7115000000000000000003 /* TilePool.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7115000000000000000001 /* TilePool.swift */; };
 		5E7115000000000000000102 /* TilePoolTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7115000000000000000101 /* TilePoolTests.swift */; };
@@ -573,6 +580,13 @@
 		5E6010A00000000000000101 /* WindowTitleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowTitleTests.swift; sourceTree = "<group>"; };
 		5E6010B00000000000000001 /* TileGridLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileGridLayout.swift; sourceTree = "<group>"; };
 		5E6010B00000000000000101 /* TileGridLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileGridLayoutTests.swift; sourceTree = "<group>"; };
+		SNAP01000000000000000001 /* SnapLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapLayout.swift; sourceTree = "<group>"; };
+		SNAP01000000000000000011 /* SnapLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapLayoutTests.swift; sourceTree = "<group>"; };
+		SNAP01000000000000000021 /* SnapLayoutSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SnapLayoutSpecs.md; sourceTree = "<group>"; };
+		SNAP01000000000000000031 /* SnapLayoutPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapLayoutPanelView.swift; sourceTree = "<group>"; };
+		SNAP01000000000000000041 /* SnapSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapSession.swift; sourceTree = "<group>"; };
+		SNAP01000000000000000051 /* SnapLayoutGlyphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapLayoutGlyphView.swift; sourceTree = "<group>"; };
+		SNAP01000000000000000061 /* SnapLayoutsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapLayoutsSheet.swift; sourceTree = "<group>"; };
 		5E7115000000000000000001 /* TilePool.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TilePool.swift; sourceTree = "<group>"; };
 		5E7115000000000000000101 /* TilePoolTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TilePoolTests.swift; sourceTree = "<group>"; };
 		5E7115000000000000000201 /* TilePoolSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TilePoolSpecs.md; sourceTree = "<group>"; };
@@ -1176,6 +1190,7 @@
 				5FC5980000000000000A0001 /* NativeHotkeyResolver.swift */,
 				5FC5980000000000000A0101 /* NativeHotkeyResolverTests.swift */,
 				5F21C9DF2C6E94240091F72F /* ShortcutsWhenActiveSheet.swift */,
+				SNAP01000000000000000061 /* SnapLayoutsSheet.swift */,
 				5F21C9E12C6E94410091F72F /* AdditionalControlsSheet.swift */,
 			);
 			path = controls;
@@ -1423,6 +1438,7 @@
 				5E5EA12E0000000000000001 /* KeyRepeatTimerTestable.swift */,
 				5E5EA12E0000000000000101 /* KeyRepeatTimerTests.swift */,
 				6853124817C5591C2802121F /* search-discovery */,
+				SNAP010000000000000000G1 /* snap */,
 				D04BA62E30174C336E4080FA /* main-window */,
 				F00DCAFE0000000000000002 /* Search.swift */,
 				F00DCAFE0000000000000003 /* SearchTestable.swift */,
@@ -1727,6 +1743,19 @@
 				BF0C829EAA93A4C4ADB42CF8 /* Mocks.swift */,
 			);
 			path = "_test-support";
+			sourceTree = "<group>";
+		};
+		SNAP010000000000000000G1 /* snap */ = {
+			isa = PBXGroup;
+			children = (
+				SNAP01000000000000000001 /* SnapLayout.swift */,
+				SNAP01000000000000000021 /* SnapLayoutSpecs.md */,
+				SNAP01000000000000000011 /* SnapLayoutTests.swift */,
+				SNAP01000000000000000041 /* SnapSession.swift */,
+				SNAP01000000000000000051 /* SnapLayoutGlyphView.swift */,
+				SNAP01000000000000000031 /* SnapLayoutPanelView.swift */,
+			);
+			path = snap;
 			sourceTree = "<group>";
 		};
 		D04BA62E30174C336E4080FA /* main-window */ = {
@@ -2319,6 +2348,8 @@
 				5E6010A00000000000000102 /* WindowTitleTests.swift in Sources */,
 				5E6010B00000000000000003 /* TileGridLayout.swift in Sources */,
 				5E6010B00000000000000102 /* TileGridLayoutTests.swift in Sources */,
+				SNAP01000000000000000003 /* SnapLayout.swift in Sources */,
+				SNAP01000000000000000012 /* SnapLayoutTests.swift in Sources */,
 				5E7115000000000000000003 /* TilePool.swift in Sources */,
 				5E7115000000000000000102 /* TilePoolTests.swift in Sources */,
 				5E5EA12D0000000000000003 /* ShortcutModifierResolver.swift in Sources */,
@@ -2471,6 +2502,11 @@
 				5E5EA12F0000000000000002 /* SearchFieldEditing.swift in Sources */,
 				5E6010A00000000000000002 /* WindowTitle.swift in Sources */,
 				5E6010B00000000000000002 /* TileGridLayout.swift in Sources */,
+				SNAP01000000000000000002 /* SnapLayout.swift in Sources */,
+				SNAP01000000000000000042 /* SnapSession.swift in Sources */,
+				SNAP01000000000000000052 /* SnapLayoutGlyphView.swift in Sources */,
+				SNAP01000000000000000032 /* SnapLayoutPanelView.swift in Sources */,
+				SNAP01000000000000000062 /* SnapLayoutsSheet.swift in Sources */,
 				5E7115000000000000000002 /* TilePool.swift in Sources */,
 				5E5EA12D0000000000000002 /* ShortcutModifierResolver.swift in Sources */,
 				5F5849A900000000000000A2 /* BruteForceWindowMatch.swift in Sources */,

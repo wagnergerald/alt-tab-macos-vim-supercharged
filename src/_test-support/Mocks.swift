@@ -148,6 +148,17 @@ class App {
     }
     static let app = AppMock()
     static let bundleIdentifier = "com.lwouis.alt-tab-macos"
+    static func hideUi() {}
+    static func focusSnapTargetWithoutResizing() {}
+    static func applySnapLayout(_ layout: SnapLayout) {}
+}
+
+enum SnapSession {
+    static var isActive = false
+}
+
+enum ContextMenuEvents {
+    static var isMenuOpen = false
 }
 
 class TilesPanel {
@@ -163,12 +174,17 @@ class TilesView {
         get { App.app.tilesPanel.tilesView.isSearchEditing }
         set { App.app.tilesPanel.tilesView.isSearchEditing = newValue }
     }
+    static var windowHintMode = false
+    static var searchFieldYieldsToHints = false
 
     static func handleSearchEditingKeyDown(_ event: NSEvent) -> SearchKeyResult {
         return App.app.tilesPanel.tilesView.handleSearchEditingKeyDown(event)
     }
 
     static func giveTheFieldTheCaretNow() {}
+    static func tryEnterChooserHintModeFromEvent(_ event: NSEvent) -> Bool { false }
+    static func exitWindowHintMode() {}
+    static func handleWindowHintKeyDown(_ event: NSEvent, _ isARepeat: Bool) -> Bool { false }
 }
 
 class ControlsTab {
@@ -194,6 +210,7 @@ class ControlsTab {
 //        "vimCycleUp": ATShortcut(Shortcut(keyEquivalent: "k")!, "vimCycleUp", .local, .down),
 //        "vimCycleDown": ATShortcut(Shortcut(keyEquivalent: "j")!, "vimCycleDown", .local, .down),
         "focusWindowShortcut": ATShortcut(Shortcut(keyEquivalent: " ")!, "focusWindowShortcut", .local, .down),
+        "focusAndSnapWindowShortcut": ATShortcut(Shortcut(keyEquivalent: "\r")!, "focusAndSnapWindowShortcut", .local, .down),
         "previousWindowShortcut": ATShortcut(Shortcut(keyEquivalent: "⇧")!, "previousWindowShortcut", .local, .down),
         "cancelShortcut": ATShortcut(Shortcut(keyEquivalent: "⎋")!, "cancelShortcut", .local, .down),
         "searchShortcut": ATShortcut(Shortcut(keyEquivalent: "s")!, "searchShortcut", .local, .down),
@@ -248,6 +265,7 @@ class Preferences {
     static let maxShortcutCount = 9
     // Matches `defaultShortcuts` (3 hold slots: holdShortcut / holdShortcut2 / holdShortcut3).
     static var shortcutCount = 3
+    static var windowHintsEnabled = false
 
     static func indexToName(_ baseName: String, _ index: Int) -> String {
         return baseName + (index == 0 ? "" : String(index + 1))
@@ -260,6 +278,10 @@ class Preferences {
 
     static func effectiveShortcutStyle(_ index: Int) -> ShortcutStylePreference {
         return shortcutStyle
+    }
+
+    static func shortcut(_ key: String) -> Shortcut? {
+        ControlsTab.shortcuts[key]?.shortcut
     }
 }
 

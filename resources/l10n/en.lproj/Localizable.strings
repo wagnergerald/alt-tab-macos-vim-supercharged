@@ -364,7 +364,7 @@
 "chooserMode.title.normal" = "Normal mode";
 "chooserMode.title.normalWithShortcut" = "Normal mode · %@ → hint mode";
 "chooserMode.detail.subtitle.normal" = "%1$@: hint mode · %2$@: close chooser";
-"chooserMode.detail.subtitle.focusHints" = "Type letters/numbers next to app icon to focus windows. %1$@: back to normal navigation.";
+"chooserMode.detail.subtitle.focusHints" = "Type letters/numbers next to app icon to focus; uppercase (e.g. H) opens snap layouts. %1$@: back to normal navigation.";
 "chooserMode.detail.subtitle.minimizeHints" = "Type letters/numbers next to app icon to minimize windows. %1$@: back to normal navigation.";
 "chooserMode.detail.subtitle.closeHints" = "Type letters/numbers next to app icon to close windows. %1$@: back to normal navigation.";
 "chooserMode.detail.subtitle.quitHints" = "Type letters/numbers next to app icon to quit apps. %1$@: back to normal navigation.";
@@ -397,6 +397,24 @@
 "shortcutsWhenActive.enterHintModeFromNormalSubtitle" = "From normal navigation (after Esc), switches to focus hint mode. From minimize, close, quit, or hide hint mode, switches to focus hint mode. Default: ⌃K.";
 "chooserMode.modeSwitchDesc.enterFocusFromActionModes" = "Switch to focus hint mode";
 "shortcutsWhenActive.focusWindowSubtitle" = "With window hints on: in Normal mode this focuses the selected window; in a hint mode the caption shows “<action> focused window” and it performs that mode’s action on the selection (same as typing its hint).";
+
+"snapLayout.focusAndSnapTitle" = "Focus and snap window";
+"snapLayout.focusAndSnapSubtitle" = "Keeps the switcher open and shows snap layouts for the selected window. Also: type an uppercase hint letter (e.g. H) to snap that window. Default: Enter.";
+"snapLayout.sheetButton" = "Snap layouts…";
+"snapLayout.sheetTitle" = "Snap layouts";
+"snapLayout.sheetSubtitle" = "Enter (or an uppercase window-hint letter) locks a window and shows these layouts. Lowercase hints still focus without resizing.";
+"snapLayout.patternsSectionTitle" = "Layout keys";
+"snapLayout.patternsSectionSubtitle" = "Vim-style keys by default (h/l/k/j and u/i/o). Uppercase works the same while the snap panel is open.";
+"snapLayout.panelTitle" = "Snap to";
+"snapLayout.bannerTitle" = "Snap layout";
+"snapLayout.bannerDetail" = "Press a layout key (or Shift+letter), or Space/Escape to focus without resizing";
+"snapLayout.leftHalf" = "Left half";
+"snapLayout.rightHalf" = "Right half";
+"snapLayout.centerHalf" = "Center half";
+"snapLayout.leftThird" = "Left third";
+"snapLayout.centerThird" = "Center third";
+"snapLayout.rightThird" = "Right third";
+"snapLayout.centerTwoThirds" = "Center two thirds";
 "shortcutsWhenActive.openSettingsFromSwitcherSubtitle" = "Only when the switcher stays open after you release the shortcut (Keep open, or window hints). Default matches the app menu: ⌘,.";
 "shortcutsWhenActive.tableSubtitle" = "Normal navigation: after Escape leaves window-hint mode (or if window hints are off), these shortcuts run as usual. Window-hint mode: single-letter shortcuts on thumbnails take priority; Escape exits hint mode. Shortcuts for minimize, close, quit, fullscreen, and hide hint modes are in “Additional controls…” (Hint mode navigation). “Close the switcher immediately” only applies while window-hint mode is on when “Show window hints on thumbnails” is enabled; otherwise it applies whenever the switcher is open. If it and “Quit app” share the same key (e.g. plain Q), that key closes the switcher in hint mode and quits the app in normal navigation.";
 "shortcutsWhenActive.dismissSwitcherSubtitle" = "Only while window-hint mode is on (with “Show window hints on thumbnails” enabled). Closes the switcher; the same key is not used as a window hint. With window hints off in preferences, this shortcut works whenever the switcher is open.";

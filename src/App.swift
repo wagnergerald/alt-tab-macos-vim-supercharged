@@ -82,19 +82,21 @@ class App: AppCenterApplication {
 
     /// The part of the dismissal the user can see, with the focus the user is waiting for, so both are out
     /// before any bookkeeping. Returns false when the switcher was already hidden.
-    private static func beginHideUi(_ keepPreview: Bool, focusing window: Window? = nil) -> Bool {
+    private static func beginHideUi(_ keepPreview: Bool, focusing window: Window? = nil,
+                                    thenSetFrame: CGRect? = nil) -> Bool {
         MainThreadStall.step()
         Logger.debug { "active:\(SwitcherSession.isActive)" }
         guard SwitcherSession.current != nil else { return false } // already hidden
         DismissalInput.begin()
         SwitcherSession.current = nil
+        SnapSession.clear()
         // The badge read only runs while a session is open, so once this one closes its quiet period has no
         // next call left to throttle: all it can still do is delay the FIRST read of the next session by up
         // to a second. An app that cleared its badge in between was drawn with the badge it had cleared for
         // that whole second (QA DB-02).
         Applications.dockBadgeThrottler.reset()
         if let window {
-            window.focus(TilesPanel.shared.orderOutOnceFronted())
+            window.focus(TilesPanel.shared.orderOutOnceFronted(), thenSetFrame: thenSetFrame)
         } else {
             hideTilesPanelWithoutChangingKeyWindow()
         }
@@ -108,6 +110,7 @@ class App: AppCenterApplication {
     private static func endHideUi(didSwitchWindow: Bool = false) {
         MainThreadStall.step()
         UsageStats.resetSession()
+        TilesView.hideSnapLayoutPanel()
         TilesView.resetWindowHintState()
         ContextMenuEvents.toggle(false)
         TrackpadEvents.reset()
@@ -144,6 +147,43 @@ class App: AppCenterApplication {
         #endif
         Logger.info { selectedWindow?.debugId }
         focusSelectedWindow(selectedWindow)
+    }
+
+    /// Enter: lock the selected window and show the snap panel. Switcher stays open.
+    static func enterSnapLayoutMode() {
+        guard SwitcherSession.isActive, !SnapSession.isActive else { return }
+        switch TilesView.chooserHintMode {
+        case .normal, .focusHints: break
+        default: return
+        }
+        guard let window = Windows.selectedWindow(), !window.isWindowlessApp else { return }
+        guard window.canBeMinDeminOrFullscreened() else {
+            NSSound.beep()
+            return
+        }
+        SnapSession.begin(locking: window)
+        TilesView.showSnapLayoutPanel()
+    }
+
+    /// Space / Escape while the snap panel is open: focus without resizing.
+    static func focusSnapTargetWithoutResizing() {
+        guard let window = SnapSession.lockedWindow else { return }
+        SnapSession.clear()
+        TilesView.hideSnapLayoutPanel()
+        focusSelectedWindow(window)
+    }
+
+    static func applySnapLayout(_ layout: SnapLayout) {
+        guard let window = SnapSession.lockedWindow else { return }
+        let screen = NSScreen.screens.first { screen in
+            guard let uuid = screen.cachedUuid() else { return false }
+            return uuid == window.screenId
+        } ?? NSScreen.preferred
+        let frame = layout.quartzRect(on: screen)
+        SnapSession.clear()
+        TilesView.hideSnapLayoutPanel()
+        // Focus first so makeKey / orderOut are not queued behind AX setFrame (fullscreen exit can wait 1s+).
+        focusSelectedWindow(window, thenSetFrame: frame)
     }
 
     @objc static func checkForUpdatesNow(_ sender: NSMenuItem) {
@@ -357,11 +397,11 @@ class App: AppCenterApplication {
         Windows.selectedWindow()?.application.hideOrShow()
     }
 
-    static func focusSelectedWindow(_ selectedWindow: Window?) {
+    static func focusSelectedWindow(_ selectedWindow: Window?, thenSetFrame: CGRect? = nil) {
         MainThreadStall.step()
         let missionControl = MissionControl.state()
         let window = missionControl == .inactive || missionControl == .showDesktop ? selectedWindow : nil
-        guard beginHideUi(window != nil, focusing: window) else { return } // already hidden
+        guard beginHideUi(window != nil, focusing: window, thenSetFrame: thenSetFrame) else { return } // already hidden
         if let window, Preferences.cursorFollowFocus == .always || (
             Preferences.cursorFollowFocus == .differentScreen && (Spaces.screenSpacesMap.first { $0.value.contains { space in window.spaceIds.contains(space) } })?.key != NSScreen.active()?.cachedUuid()) {
             moveCursorToSelectedWindow(window)
@@ -625,8 +665,8 @@ class App: AppCenterApplication {
         }
         #if DEBUG
         if !QAMenu.suppressed {
+            // Build the panel for middle-click toggle, but keep it hidden after launch.
             QAMenu.shared = QAMenu()
-            QAMenu.shared?.orderFront(nil)
             if QAMenu.openSettingsOnLaunch { App.showSettingsWindow() }
             if QAMenu.graphEnabled { DebugMenu.setEnabled(true) }
         }
@@ -714,12 +754,13 @@ extension App: NSApplicationDelegate {
             NotificationCenter.default.post(name: ProTransitionManager.proLockStateDidChangeNotification, object: nil)
         }
         #if DEBUG
-        // The QA launch never initializes persisted licensing: its in-memory state must neither read nor
-        // alter the real license, and it must not schedule a revalidation that can later replace the mock.
-        if CommandLine.arguments.contains("--mock-pro") {
-            LicenseManager.shared.mockProUser()
-        } else {
+        // Debug builds skip trial/license prompts and run as Pro. QA lifecycle keeps real initialize()
+        // so its seed/advance commands can drive trial days without the mock latch blocking refreshState().
+        if QaLifecycle.enabled {
             LicenseManager.shared.initialize()
+        } else {
+            LicenseManager.shared.mockProUser()
+            ProTransitionManager.shared.onProUnlocked()
         }
         #else
         LicenseManager.shared.initialize()

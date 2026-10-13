@@ -28,6 +28,7 @@ class ControlsTab {
     static var vimKeysCheckbox: Switch!
 
     static var shortcutsWhenActiveSheet: ShortcutsWhenActiveSheet!
+    static var snapLayoutsSheet: SnapLayoutsSheet!
     static var additionalControlsSheet: AdditionalControlsSheet!
 
     /// Map from a tab-segment `NSSegmentedControl` (Filtering / Appearance / Ordering) to the
@@ -49,32 +50,39 @@ class ControlsTab {
     static var shortcutEditorContentWidth: CGFloat { shortcutEditorWidth - shortcutEditorRightPadding }
     private static let gestureSelectionIndex = -1
     private static let staticManagedShortcutPreferences = [
-        "focusWindowShortcut", "previousWindowShortcut", "cancelShortcut", "searchShortcut",
+        "focusWindowShortcut", "focusAndSnapWindowShortcut", "previousWindowShortcut", "cancelShortcut", "searchShortcut",
         "closeWindowShortcut", "minDeminWindowShortcut", "toggleFullscreenWindowShortcut", "dismissSwitcherShortcut", "quitAppShortcut", "hideShowAppShortcut",
         "enterHintModeFromNormalShortcut", "openSettingsFromSwitcherShortcut",
         "vimCycleLeft", "vimCycleRight", "vimCycleUp", "vimCycleDown",
-    ]
+    ] + SnapLayout.allPreferenceKeys
     /// Canonical id → localized label for the always-active ("when active") shortcuts. Single source
     /// of truth: `ShortcutsWhenActiveSheet` reads its row titles from here, and `conflictLabel(_:)`
     /// uses it to name a conflicting shortcut without needing its (possibly-unbuilt) sheet control.
-    static let staticShortcutLabels = [
-        "focusWindowShortcut": NSLocalizedString("Focus selected window", comment: ""),
-        "previousWindowShortcut": NSLocalizedString("Select previous window", comment: ""),
-        "cancelShortcut": NSLocalizedString("Cancel", comment: ""),
-        "searchShortcut": NSLocalizedString("Search", comment: ""),
-        "closeWindowShortcut": NSLocalizedString("Close window", comment: ""),
-        "minDeminWindowShortcut": NSLocalizedString("Minimize/Deminimize window", comment: ""),
-        "toggleFullscreenWindowShortcut": NSLocalizedString("Fullscreen/Defullscreen window", comment: ""),
-        "quitAppShortcut": NSLocalizedString("Quit app", comment: ""),
-        "hideShowAppShortcut": NSLocalizedString("Hide/Show app", comment: ""),
-        "dismissSwitcherShortcut": NSLocalizedString("Close the switcher immediately", comment: ""),
-        "enterHintModeFromNormalShortcut": NSLocalizedString("shortcutsWhenActive.enterHintModeFromNormalTitle", comment: ""),
-        "openSettingsFromSwitcherShortcut": NSLocalizedString("Open settings while switcher is visible", comment: ""),
-        "vimCycleLeft": NSLocalizedString("Vim navigation — move left", comment: ""),
-        "vimCycleRight": NSLocalizedString("Vim navigation — move right", comment: ""),
-        "vimCycleUp": NSLocalizedString("Vim navigation — move up", comment: ""),
-        "vimCycleDown": NSLocalizedString("Vim navigation — move down", comment: ""),
-    ]
+    static let staticShortcutLabels: [String: String] = {
+        var labels: [String: String] = [
+            "focusWindowShortcut": NSLocalizedString("Focus selected window", comment: ""),
+            "focusAndSnapWindowShortcut": NSLocalizedString("snapLayout.focusAndSnapTitle", comment: ""),
+            "previousWindowShortcut": NSLocalizedString("Select previous window", comment: ""),
+            "cancelShortcut": NSLocalizedString("Cancel", comment: ""),
+            "searchShortcut": NSLocalizedString("Search", comment: ""),
+            "closeWindowShortcut": NSLocalizedString("Close window", comment: ""),
+            "minDeminWindowShortcut": NSLocalizedString("Minimize/Deminimize window", comment: ""),
+            "toggleFullscreenWindowShortcut": NSLocalizedString("Fullscreen/Defullscreen window", comment: ""),
+            "quitAppShortcut": NSLocalizedString("Quit app", comment: ""),
+            "hideShowAppShortcut": NSLocalizedString("Hide/Show app", comment: ""),
+            "dismissSwitcherShortcut": NSLocalizedString("Close the switcher immediately", comment: ""),
+            "enterHintModeFromNormalShortcut": NSLocalizedString("shortcutsWhenActive.enterHintModeFromNormalTitle", comment: ""),
+            "openSettingsFromSwitcherShortcut": NSLocalizedString("Open settings while switcher is visible", comment: ""),
+            "vimCycleLeft": NSLocalizedString("Vim navigation — move left", comment: ""),
+            "vimCycleRight": NSLocalizedString("Vim navigation — move right", comment: ""),
+            "vimCycleUp": NSLocalizedString("Vim navigation — move up", comment: ""),
+            "vimCycleDown": NSLocalizedString("Vim navigation — move down", comment: ""),
+        ]
+        for layout in SnapLayout.allCases {
+            labels[layout.preferenceKey] = layout.localizedTitle
+        }
+        return labels
+    }()
     private static let keysRefreshingChooserBanner: Set<String> = [
         "dismissSwitcherShortcut", "quitAppShortcut", "cancelShortcut", "enterHintModeFromNormalShortcut", "openSettingsFromSwitcherShortcut",
         "focusWindowShortcut", "minDeminWindowShortcut", "closeWindowShortcut", "toggleFullscreenWindowShortcut", "hideShowAppShortcut",
@@ -138,7 +146,8 @@ class ControlsTab {
         let shortcutsView = makeShortcutsView()
         let additionalControlsButton = NSButton(title: NSLocalizedString("Additional controls", comment: "") + "…", target: self, action: #selector(showAdditionalControlsSettings))
         let shortcutsButton = NSButton(title: NSLocalizedString("Shortcuts when active", comment: "") + "…", target: self, action: #selector(showShortcutsSettings))
-        let tools = StackView([additionalControlsButton, shortcutsButton], .horizontal)
+        let snapLayoutsButton = NSButton(title: NSLocalizedString("snapLayout.sheetButton", comment: ""), target: self, action: #selector(showSnapLayoutsSettings))
+        let tools = StackView([additionalControlsButton, shortcutsButton, snapLayoutsButton], .horizontal)
         let view = TableGroupSetView(originalViews: [shortcutsView], toolsViews: [tools], padding: 0, bottomPadding: 0, othersAlignment: .leading, toolsAlignment: .trailing)
 
         // Sheets are built lazily on first show. Pre-build search visibility is provided by
@@ -165,6 +174,7 @@ class ControlsTab {
         NotificationCenter.default.removeObserver(&proLockObserver)
         NotificationCenter.default.removeObserver(&shortcutRowsScrollObserver)
         shortcutsWhenActiveSheet = nil
+        snapLayoutsSheet = nil
         additionalControlsSheet = nil
         arrowKeysCheckbox = nil
         vimKeysCheckbox = nil
@@ -741,6 +751,11 @@ class ControlsTab {
     @objc static func showShortcutsSettings() {
         if shortcutsWhenActiveSheet == nil { shortcutsWhenActiveSheet = ShortcutsWhenActiveSheet() }
         SettingsWindow.shared.beginSheetWithSearchHighlight(shortcutsWhenActiveSheet)
+    }
+
+    @objc static func showSnapLayoutsSettings() {
+        if snapLayoutsSheet == nil { snapLayoutsSheet = SnapLayoutsSheet() }
+        SettingsWindow.shared.beginSheetWithSearchHighlight(snapLayoutsSheet)
     }
 
     @objc static func showAdditionalControlsSettings() {

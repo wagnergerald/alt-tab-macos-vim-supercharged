@@ -41,12 +41,23 @@ func handleKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?, _ ke
     // The Escape absorption tap can consume the key before NSEvent dismissal monitors see it.
     if keyCode == UInt32(kVK_Escape) { Day15HardGatePopover.dismissOnEscape() }
     if let event, event.type == .keyDown, SwitcherSession.isActive, TilesPanel.shared.isKeyWindow,
+       !event.isARepeat, SnapSession.isActive {
+        if event.keyCode == UInt16(kVK_Escape) {
+            App.focusSnapTargetWithoutResizing()
+            return true
+        }
+        if let layout = SnapLayout.layoutMatching(event: event) {
+            App.applySnapLayout(layout)
+            return true
+        }
+    }
+    if let event, event.type == .keyDown, SwitcherSession.isActive, TilesPanel.shared.isKeyWindow,
        !event.isARepeat {
-        let dismissAllowed = !Preferences.windowHintsEnabled || TilesView.windowHintMode
+        let dismissAllowed = !Preferences.windowHintsEnabled || TilesView.windowHintMode || SnapSession.isActive
         let dismissMatch = dismissAllowed && matchesActivePanelShortcut(event, "dismissSwitcherShortcut")
         let quitMatch = matchesActivePanelShortcut(event, "quitAppShortcut")
         if dismissMatch && quitMatch && activePanelShortcutsSameBinding("dismissSwitcherShortcut", "quitAppShortcut") {
-            if TilesView.windowHintMode {
+            if TilesView.windowHintMode || SnapSession.isActive {
                 App.hideUi()
                 return true
             }
@@ -61,7 +72,7 @@ func handleKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?, _ ke
         }
     }
     if let event, event.type == .keyDown, SwitcherSession.isActive, TilesPanel.shared.isKeyWindow,
-       !event.isARepeat {
+       !event.isARepeat, !SnapSession.isActive {
         if TilesView.tryEnterChooserHintModeFromEvent(event) {
             return true
         }
@@ -69,13 +80,13 @@ func handleKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?, _ ke
     if let event, event.type == .keyDown, SwitcherSession.isActive, TilesPanel.shared.isKeyWindow,
        !event.isARepeat,
        event.keyCode == UInt16(kVK_Escape),
-       Preferences.windowHintsEnabled, TilesView.windowHintMode {
+       Preferences.windowHintsEnabled, TilesView.windowHintMode, !SnapSession.isActive {
         TilesView.exitWindowHintMode()
         return true
     }
     if let event, event.type == .keyDown, SwitcherSession.isActive, TilesPanel.shared.isKeyWindow,
        !searchFieldBlocksWindowHints(), !ContextMenuEvents.isMenuOpen,
-       Preferences.windowHintsEnabled, TilesView.windowHintMode {
+       Preferences.windowHintsEnabled, TilesView.windowHintMode, !SnapSession.isActive {
         if TilesView.handleWindowHintKeyDown(event, isARepeat) {
             return true
         }
