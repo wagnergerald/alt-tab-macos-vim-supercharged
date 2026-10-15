@@ -62,7 +62,13 @@ class GeneralTab {
         resetButton.hasDestructiveAction = true
         resetButton.onAction = { _ in resetPreferences() }
         let tools = StackView([exportButton, importButton, resetButton], .horizontal)
-        let view = TableGroupSetView(originalViews: [table, tools], padding: 0, bottomPadding: 0)
+        let buildInfo = NSTextField(labelWithString: App.buildInfoSummary)
+        buildInfo.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+        buildInfo.textColor = .secondaryLabelColor
+        buildInfo.lineBreakMode = .byTruncatingMiddle
+        buildInfo.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        SettingsSearchIndex.registerString(App.buildInfoSummary)
+        let view = TableGroupSetView(originalViews: [table, tools, buildInfo], padding: 0, bottomPadding: 0)
         return view
     }
 

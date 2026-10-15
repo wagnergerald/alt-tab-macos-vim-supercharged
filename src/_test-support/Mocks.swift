@@ -150,7 +150,9 @@ class App {
     static let bundleIdentifier = "com.lwouis.alt-tab-macos"
     static func hideUi() {}
     static func focusSnapTargetWithoutResizing() {}
+    static func handleSnapCancel() {}
     static func applySnapLayout(_ layout: SnapLayout) {}
+    static func setSnapPendingSizeDigit(_ digit: Int) {}
 }
 
 enum SnapSession {
