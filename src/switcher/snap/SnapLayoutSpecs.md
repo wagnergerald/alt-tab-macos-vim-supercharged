@@ -22,6 +22,9 @@ Quarters (`y`/`p`/`n`/`m`) use the top or bottom half of `visibleFrame` and the 
 - **Quartz Y** is `mainScreenFrameMaxY - appKitMaxY`, matching `Window.isOnScreen`'s screen conversion.
 - **Target screen** is the locked window’s current screen, falling back to `NSScreen.preferred`.
 - **Enter with no selectable window / windowless app** is a no-op.
+- **Enter while `/` search field captures keys** focuses the selected window (does not open snap).
+- **Enter or uppercase hint after Tab yields out of the search field** still opens snap (search mode stays
+  `.editing`, but `searchFieldYieldsToHints` means keys go to hints / shortcuts).
 - **Layout keys always dismiss** after applying (focus + close panel).
 - **Digits alone do not dismiss**; they only arm a size for the next layout key.
 - **Escape** clears a pending digit first; otherwise exits snap without focusing and keeps the prior hint mode.

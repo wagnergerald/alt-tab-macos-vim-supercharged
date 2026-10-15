@@ -80,6 +80,7 @@ class TilesPanel: NSPanel {
     func resetFrozenPosition() {
         frozenTopCenter = nil
         highWaterHeight = 0
+        TilesView.resetSearchSizeHighWater()
     }
 
     override func orderOut(_ sender: Any?) {

@@ -48,7 +48,14 @@ enum ShortcutActions {
                 }
                 runFocusShortcutActionForCurrentHintMode()
             }),
-            ShortcutAction(id: "focusAndSnapWindowShortcut", perform: { App.enterSnapLayoutMode() }),
+            ShortcutAction(id: "focusAndSnapWindowShortcut", perform: {
+                // While typing in `/` search, Enter focuses. After Tab yields to hints, Enter opens snap.
+                guard !TilesView.searchFieldCapturesKeys else {
+                    App.focusTarget()
+                    return
+                }
+                App.enterSnapLayoutMode()
+            }),
             ShortcutAction(id: "enterHintModeFromNormalShortcut", perform: {
                 guard !SnapSession.isActive else { return }
                 guard Preferences.windowHintsEnabled else { return }

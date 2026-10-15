@@ -176,8 +176,9 @@ class TilesView {
         get { App.app.tilesPanel.tilesView.isSearchEditing }
         set { App.app.tilesPanel.tilesView.isSearchEditing = newValue }
     }
-    static var windowHintMode = false
     static var searchFieldYieldsToHints = false
+    static var searchFieldCapturesKeys: Bool { isSearchEditing && !searchFieldYieldsToHints }
+    static var windowHintMode = false
 
     static func handleSearchEditingKeyDown(_ event: NSEvent) -> SearchKeyResult {
         return App.app.tilesPanel.tilesView.handleSearchEditingKeyDown(event)

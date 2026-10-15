@@ -46,6 +46,9 @@ class TilesView {
     static var recycledViews = [TileView]()
     static var thumbnailsWidth = CGFloat(0.0)
     static var thumbnailsHeight = CGFloat(0.0)
+    /// While `/` search is on, never shrink the tile viewport below this high-water (panel stays stable).
+    private static var searchHighWaterThumbnailsWidth = CGFloat(0)
+    private static var searchHighWaterThumbnailsHeight = CGFloat(0)
     static var layoutCache = LayoutCache()
     static var thumbnailUnderLayer = TileUnderLayer()
     static var thumbnailOverView = TileOverView()
@@ -129,6 +132,8 @@ class TilesView {
 
     static var isSearchModeOn: Bool { searchMode != .off }
     static var isSearchEditing: Bool { searchMode == .editing }
+    /// Search stays `.editing` after Tab yields to window hints; only then does the field stop capturing keys.
+    static var searchFieldCapturesKeys: Bool { isSearchEditing && !searchFieldYieldsToHints }
 
     static func startSearchSession(_ startInSearchMode: Bool) {
         searchField.stringValue = ""
@@ -145,6 +150,11 @@ class TilesView {
         searchFieldYieldsToHints = false
         searchMode = .off
         takeTheCaretFromTheField()
+    }
+
+    static func resetSearchSizeHighWater() {
+        searchHighWaterThumbnailsWidth = 0
+        searchHighWaterThumbnailsHeight = 0
     }
 
     /// The counterpart to `giveTheFieldTheCaret`, and a turn late for the mirror reason: clearing the field
@@ -948,7 +958,10 @@ class TilesView {
 
     static func updateItemsAndLayout(_ preservedScrollOrigin: CGPoint?) {
         var widthMax = TilesPanel.maxThumbnailsWidth().rounded()
-        if Preferences.effectiveAppearanceSize(SwitcherSession.activeShortcutIndex) == .auto {
+        // During search, keep the Appearance size from the first search layout so filtering doesn't
+        // re-pick Auto tile sizes as the visible count drops.
+        let mayResolveAuto = searchMode == .off || searchHighWaterThumbnailsHeight == 0
+        if Preferences.effectiveAppearanceSize(SwitcherSession.activeShortcutIndex) == .auto, mayResolveAuto {
             resolveAutoSize(widthMax)
             Self.updateCachedSizes()
             widthMax = TilesPanel.maxThumbnailsWidth().rounded()
@@ -1075,8 +1088,16 @@ class TilesView {
         let heightMax = max(0, TilesPanel.maxThumbnailsHeight() - searchReservedHeight)
         let minSearchWidth = min(widthMax, 320)
         let minWidth = min(widthMax, 320)
-        TilesView.thumbnailsWidth = max(min(maxX, widthMax), searchMode == .off ? (maxX == 0 ? minWidth : 0) : minWidth)
-        TilesView.thumbnailsHeight = min(maxY, heightMax)
+        var nextWidth = max(min(maxX, widthMax), searchMode == .off ? (maxX == 0 ? minWidth : 0) : minWidth)
+        var nextHeight = min(maxY, heightMax)
+        if searchMode != .off {
+            nextWidth = max(nextWidth, searchHighWaterThumbnailsWidth)
+            nextHeight = max(nextHeight, searchHighWaterThumbnailsHeight)
+            searchHighWaterThumbnailsWidth = nextWidth
+            searchHighWaterThumbnailsHeight = nextHeight
+        }
+        TilesView.thumbnailsWidth = nextWidth
+        TilesView.thumbnailsHeight = nextHeight
         let appIconsBottomViewportPadding = appIconsBottomViewportPadding(maxY, heightMax, labelHeight)
         let frameWidth = TilesView.thumbnailsWidth + Appearance.windowPadding * 2
         var frameHeight = TilesView.thumbnailsHeight + Appearance.windowPadding * 2 + searchReservedHeight
@@ -1092,7 +1113,7 @@ class TilesView {
         if host !== contentView {
             host.frame = CGRect(origin: .zero, size: NSSize(width: frameWidth, height: frameHeight))
         }
-        let scrollHeight = max(0, min(maxY, heightMax) - appIconsBottomViewportPadding * 2)
+        let scrollHeight = max(0, TilesView.thumbnailsHeight - appIconsBottomViewportPadding * 2)
         scrollView.frame.size = NSSize(width: TilesView.thumbnailsWidth, height: scrollHeight)
         scrollView.frame.origin = CGPoint(x: originX, y: originY + appIconsBottomViewportPadding * 2)
         scrollView.contentView.frame.size = scrollView.frame.size

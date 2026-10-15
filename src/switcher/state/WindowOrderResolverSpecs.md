@@ -14,9 +14,11 @@ precomputing `OrderWindow`s let the sort drop from O(n log n) `Search` calls to 
 snapshotted once).
 
 Decision order:
-1. **Search active** → matched windows first; then higher relevance; then `lastFocusOrder`.
-2. **Show-at-the-end buckets** → windows whose type is set to "show at the end" (windowless / hidden /
-   minimized) sink below the rest.
+1. **Show-at-the-end buckets** → windows whose type is set to "show at the end" (windowless / hidden /
+   minimized) sink below the rest. Applies during search too, so windowless apps are never mixed into
+   the filtered real-window list. Locked/missing-preview windows are not windowless and stay in the
+   normal bucket.
+2. **Search active** → matched windows first; then higher relevance; then `lastFocusOrder`.
 3. **Sort type** → `recentlyFocused` (lowest `lastFocusOrder`), `recentlyCreated` (highest
    `creationOrder`), `alphabetical` (app name, then title; `localizedStandardCompare`), or `space`
    (all-spaces windows first, then lowest space index, then windows with no space index, then
@@ -26,7 +28,7 @@ Decision order:
 ## Behavior & edge cases
 
 - Buckets only separate when the relevant "show at the end" preference is set *and* the two windows
-  differ on that trait; otherwise ordering falls through to the sort type.
+  differ on that trait; otherwise ordering falls through to search ranking or the sort type.
 - `recentlyFocused`/`recentlyCreated` return directly (no alphabetical tiebreak); the `lastFocusOrder`
   tiebreak applies to the alphabetical/space paths.
 - `space`: windows on all spaces sort ahead of space-bound ones; windows with no space index sort after
@@ -54,6 +56,8 @@ Mirrors `WindowOrderResolverTests.swift` 1:1.
 - **testWindowlessPushedToEndWhenConfigured** — a windowless row sinks below a real window.
 - **testRealWindowBeforeWindowlessWhenConfigured** — the real window comes first.
 - **testWindowlessNotSeparatedWhenFlagOff** — with the bucket off, the sort type decides instead.
+- **testWindowlessStaysAtEndDuringSearchWhenConfigured** — during filtering, a matching windowless row
+  still sinks below a lower-relevance real window (lock-preview tiles stay in the real bucket).
 - **testHiddenPushedToEndWhenConfigured** — hidden-app windows sink when configured.
 - **testMinimizedPushedToEndWhenConfigured** — minimized windows sink when configured.
 
