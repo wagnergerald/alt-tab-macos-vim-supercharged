@@ -57,15 +57,16 @@ enum WindowOrderResolver {
                                 hiddenAtEnd: Bool = false,       // showHiddenWindows == .showAtTheEnd
                                 minimizedAtEnd: Bool = false,    // showMinimizedWindows == .showAtTheEnd
                                 sortType: OrderSortType = .recentlyFocused) -> Bool {
+        // Buckets apply even while filtering: windowless stay at the end; locked-preview windows
+        // are normal windows and keep search / focus order with everyone else.
+        if windowlessAtEnd && a.state.isWindowlessApp != b.state.isWindowlessApp { return b.state.isWindowlessApp }
+        if hiddenAtEnd && a.app.isHidden != b.app.isHidden { return b.app.isHidden }
+        if minimizedAtEnd && a.state.isMinimized != b.state.isMinimized { return b.state.isMinimized }
         if searchActive {
             if a.searchMatches != b.searchMatches { return a.searchMatches }
             if a.searchRelevance != b.searchRelevance { return a.searchRelevance > b.searchRelevance }
             return a.state.lastFocusOrder < b.state.lastFocusOrder
         }
-        // separate buckets for these window types (pushed to the end)
-        if windowlessAtEnd && a.state.isWindowlessApp != b.state.isWindowlessApp { return b.state.isWindowlessApp }
-        if hiddenAtEnd && a.app.isHidden != b.app.isHidden { return b.app.isHidden }
-        if minimizedAtEnd && a.state.isMinimized != b.state.isMinimized { return b.state.isMinimized }
         // sort within each bucket
         if sortType == .recentlyFocused { return a.state.lastFocusOrder < b.state.lastFocusOrder }
         if sortType == .recentlyCreated { return b.state.creationOrder < a.state.creationOrder }

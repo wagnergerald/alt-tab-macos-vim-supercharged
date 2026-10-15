@@ -234,6 +234,13 @@ class Window {
     }
 
     func refreshThumbnail(_ screenshot: CALayerContents) {
+        // Blocked captures (KeePassXC `NSWindowSharingNone`, etc.) arrive as transparent/black voids —
+        // drop them so the tile shows `ThumbnailPlaceholder` instead of an empty preview.
+        if ThumbnailPlaceholder.isVisuallyEmpty(screenshot) {
+            thumbnail = nil
+            applyThumbnailPlaceholderToVisibleTile()
+            return
+        }
         // a frame the OS drew mid-animation is much smaller than this window: keep the previous thumbnail,
         // stale but correct, while another capture is asked for (`WindowThumbnails.acceptCapture`)
         guard WindowThumbnails.acceptCapture(self, screenshot) else { return }
@@ -255,6 +262,34 @@ class Window {
             if cgWindowId.flatMap({ SwitcherSession.current?.hasPreviewFrame($0) }) != true {
                 PreviewPanel.updateIfShowing(cgWindowId, screenshot, position, size)
             }
+        }
+    }
+
+    private func applyThumbnailPlaceholderToVisibleTile() {
+        guard SwitcherSession.isActive, shouldShowTheUser,
+              let view = (TilesView.recycledViews.first { $0.window_?.cgWindowId == cgWindowId }),
+              !view.thumbnail.isHidden else { return }
+        let windowSize = self.size
+        let reservesWindowGeometry = ThumbnailPlaceholderLayout.reservesWindowGeometry(
+            windowSize, screenRecordingGranted: ScreenRecordingPermission.status == .granted)
+        let sourceSize = reservesWindowGeometry ? windowSize : self.icon?.size()
+        let thumbnailSize = TileView.thumbnailSize(sourceSize, !reservesWindowGeometry)
+        guard let card = ThumbnailPlaceholder.compose(
+            icon: self.icon, pointSize: thumbnailSize, scale: NSScreen.preferred.backingScaleFactor) else { return }
+        view.thumbnail.contentsGravity = .resize
+        view.thumbnail.updateContents(.cgImage(card), thumbnailSize)
+        view.previewUnavailableIndicator.isHidden = Appearance.hideThumbnails
+        if !view.previewUnavailableIndicator.isHidden {
+            // Position after thumbnail size change; mirrors TileView.updatePositions.
+            let style = Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex)
+            let verticalOffset: CGFloat = style == .titles ? 2 : 4
+            if style == .thumbnails {
+                view.previewUnavailableIndicator.frame.origin = CGPoint(
+                    x: view.thumbnail.frame.origin.x
+                        + ((view.thumbnail.frame.width - view.previewUnavailableIndicator.frame.width) / 2).rounded(),
+                    y: (view.thumbnail.frame.maxY - view.previewUnavailableIndicator.frame.height + verticalOffset).rounded())
+            }
+            view.previewUnavailableIndicator.needsDisplay = true
         }
     }
 

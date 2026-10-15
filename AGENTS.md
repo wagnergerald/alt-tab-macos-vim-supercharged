@@ -25,6 +25,7 @@ A wrong comment costs several times more than a missing one, for humans and agen
 - Run `/rework-comments` to audit or rework comments across a file, a folder, or all of `src/`.
 
 # Workflow
+- Full build/signing/reuse notes for agents: [`BUILD.md`](BUILD.md)
 - Copy commands from ai/build.sh and run them, to confirm compilation works after you're done with implementing a change
 - Run the unit tests with ai/test.sh. Don't use scripts/run_tests.sh: that's the CI entrypoint and its Release config rebuilds the whole test target on every edit (34s vs 1.3s)
 - In a git worktree, copy `config/local.xcconfig` over from the main checkout before building. It's gitignored, so a fresh worktree doesn't have it, and `debug.xcconfig` / `release.xcconfig` `#include?` it. Without it the build dies at CodeSign ("no identity found") on a dependency framework, BEFORE the app target's own Swift compile — so it looks like the code compiled when nothing of `src/` was checked. `ai/test.sh` doesn't cover that either: the `unit-tests` target has its own source list and never builds the app target
