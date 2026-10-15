@@ -43,7 +43,11 @@ func handleKeyboardEvent(_ globalId: Int?, _ shortcutState: ShortcutState?, _ ke
     if let event, event.type == .keyDown, SwitcherSession.isActive, TilesPanel.shared.isKeyWindow,
        !event.isARepeat, SnapSession.isActive {
         if event.keyCode == UInt16(kVK_Escape) {
-            App.focusSnapTargetWithoutResizing()
+            App.handleSnapCancel()
+            return true
+        }
+        if let digit = SnapLayout.sizeDigit(from: event) {
+            App.setSnapPendingSizeDigit(digit)
             return true
         }
         if let layout = SnapLayout.layoutMatching(event: event) {

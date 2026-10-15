@@ -11,6 +11,9 @@ class AboutTab {
             BoldLabel(App.name),
             NSTextField(wrappingLabelWithString: NSLocalizedString("Version", comment: "") + " " + App.version),
         ]
+        if !App.gitHash.isEmpty {
+            aboutRows.append(NSTextField(wrappingLabelWithString: String(format: NSLocalizedString("about.gitHashFormat", comment: ""), App.gitHash)))
+        }
         if !App.buildDate.isEmpty {
             aboutRows.append(NSTextField(wrappingLabelWithString: String(format: NSLocalizedString("about.buildDateFormat", comment: ""), App.buildDate)))
         }
@@ -21,9 +24,8 @@ class AboutTab {
         ])
         let appText = StackView(aboutRows, .vertical)
         appText.spacing = GridView.interPadding / 2
-        let licenceIndex = 2 + (App.buildDate.isEmpty ? 0 : 1)
-        let rowToSeparate = licenceIndex + 1
-        appText.views[rowToSeparate].topAnchor.constraint(equalTo: appText.views[rowToSeparate - 1].bottomAnchor, constant: GridView.interPadding).isActive = true
+        let websiteIndex = aboutRows.count - 2
+        appText.views[websiteIndex].topAnchor.constraint(equalTo: appText.views[websiteIndex - 1].bottomAnchor, constant: GridView.interPadding).isActive = true
         let appInfo = NSStackView(views: [appIcon, appText])
         appIcon.translatesAutoresizingMaskIntoConstraints = false
         appInfo.spacing = GridView.interPadding

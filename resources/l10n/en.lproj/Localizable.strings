@@ -329,6 +329,7 @@
 "Use Titles" = "Use Titles";
 "Version" = "Version";
 "about.buildDateFormat" = "Build date: %@";
+"about.gitHashFormat" = "Commit: %@";
 "Vertical Swipe with Four Fingers" = "Vertical Swipe with Four Fingers";
 "Vertical Swipe with Three Fingers" = "Vertical Swipe with Three Fingers";
 "View existing discussions" = "View existing discussions";
@@ -404,10 +405,10 @@
 "snapLayout.sheetTitle" = "Snap layouts";
 "snapLayout.sheetSubtitle" = "Enter (or an uppercase window-hint letter) locks a window and shows these layouts. Lowercase hints still focus without resizing.";
 "snapLayout.patternsSectionTitle" = "Layout keys";
-"snapLayout.patternsSectionSubtitle" = "Vim-style keys by default (h/l/k/j and u/i/o). Uppercase works the same while the snap panel is open.";
+"snapLayout.patternsSectionSubtitle" = "Vim keys + quarters (y/p/n/m). Prefix 1–3 for half / larger / smaller; repeat a key to cycle.";
 "snapLayout.panelTitle" = "Snap to";
 "snapLayout.bannerTitle" = "Snap layout";
-"snapLayout.bannerDetail" = "Press a layout key (or Shift+letter), or Space/Escape to focus without resizing";
+"snapLayout.bannerDetail" = "Layout key applies now; 1–3 then layout for size; Space focuses; Escape back";
 "snapLayout.leftHalf" = "Left half";
 "snapLayout.rightHalf" = "Right half";
 "snapLayout.centerHalf" = "Center half";
@@ -415,6 +416,12 @@
 "snapLayout.centerThird" = "Center third";
 "snapLayout.rightThird" = "Right third";
 "snapLayout.centerTwoThirds" = "Center two thirds";
+"snapLayout.topLeftQuarter" = "Top-left quarter";
+"snapLayout.topRightQuarter" = "Top-right quarter";
+"snapLayout.bottomLeftQuarter" = "Bottom-left quarter";
+"snapLayout.bottomRightQuarter" = "Bottom-right quarter";
+"snapLayout.panelSizeHint" = "Layout key applies now · 1–3 then layout for size · Space focuses · Escape back";
+"snapLayout.panelPendingSize" = "Size step %d — press a layout key · Escape clears";
 "shortcutsWhenActive.openSettingsFromSwitcherSubtitle" = "Only when the switcher stays open after you release the shortcut (Keep open, or window hints). Default matches the app menu: ⌘,.";
 "shortcutsWhenActive.tableSubtitle" = "Normal navigation: after Escape leaves window-hint mode (or if window hints are off), these shortcuts run as usual. Window-hint mode: single-letter shortcuts on thumbnails take priority; Escape exits hint mode. Shortcuts for minimize, close, quit, fullscreen, and hide hint modes are in “Additional controls…” (Hint mode navigation). “Close the switcher immediately” only applies while window-hint mode is on when “Show window hints on thumbnails” is enabled; otherwise it applies whenever the switcher is open. If it and “Quit app” share the same key (e.g. plain Q), that key closes the switcher in hint mode and quits the app in normal navigation.";
 "shortcutsWhenActive.dismissSwitcherSubtitle" = "Only while window-hint mode is on (with “Show window hints on thumbnails” enabled). Closes the switcher; the same key is not used as a window hint. With window hints off in preferences, this shortcut works whenever the switcher is open.";

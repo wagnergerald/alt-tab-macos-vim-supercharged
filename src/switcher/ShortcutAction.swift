@@ -75,7 +75,7 @@ enum ShortcutActions {
             ShortcutAction(id: "cancelShortcut", perform: {
                 guard let session = SwitcherSession.current else { return }
                 if SnapSession.isActive {
-                    App.hideUi()
+                    App.handleSnapCancel()
                     return
                 }
                 let entry: SearchEntryStyle = Preferences.effectiveShortcutStyle(session.shortcutIndex) == .searchOnRelease ? .startedInSearch : .toggledMidSession

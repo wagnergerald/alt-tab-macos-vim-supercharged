@@ -4,6 +4,9 @@ import ShortcutRecorder
 
 /// Fixed Rectangle-style snap presets. Fractions are of the screen's AppKit `visibleFrame`; the returned
 /// `CGRect` is in Quartz top-left space (same as AX `kAXPosition` / `kAXSize` and `Window.position`).
+///
+/// Width follows `SnapSizeStep` (half / two-thirds / third). Quarters use the top or bottom half of the
+/// visible frame and the same width steps.
 enum SnapLayout: String, CaseIterable {
     case leftHalf
     case rightHalf
@@ -12,6 +15,10 @@ enum SnapLayout: String, CaseIterable {
     case centerThird
     case rightThird
     case centerTwoThirds
+    case topLeftQuarter
+    case topRightQuarter
+    case bottomLeftQuarter
+    case bottomRightQuarter
 
     var preferenceKey: String {
         switch self {
@@ -22,11 +29,14 @@ enum SnapLayout: String, CaseIterable {
         case .centerThird: return "snapLayoutCenterThirdShortcut"
         case .rightThird: return "snapLayoutRightThirdShortcut"
         case .centerTwoThirds: return "snapLayoutCenterTwoThirdsShortcut"
+        case .topLeftQuarter: return "snapLayoutTopLeftQuarterShortcut"
+        case .topRightQuarter: return "snapLayoutTopRightQuarterShortcut"
+        case .bottomLeftQuarter: return "snapLayoutBottomLeftQuarterShortcut"
+        case .bottomRightQuarter: return "snapLayoutBottomRightQuarterShortcut"
         }
     }
 
-    /// Vim-style defaults. `h`/`l`/`k`/`j` are the main motions; `u`/`i`/`o` cover the thirds row.
-    /// Uppercase (Shift+letter) matches too while the snap panel is open — see `layoutMatching(event:)`.
+    /// Vim-style defaults. Quarters sit on `y`/`p`/`n`/`m`. Uppercase matches too — see `layoutMatching`.
     var defaultKeyEquivalent: String {
         switch self {
         case .leftHalf: return "h"
@@ -36,6 +46,10 @@ enum SnapLayout: String, CaseIterable {
         case .leftThird: return "u"
         case .centerThird: return "i"
         case .rightThird: return "o"
+        case .topLeftQuarter: return "y"
+        case .topRightQuarter: return "p"
+        case .bottomLeftQuarter: return "n"
+        case .bottomRightQuarter: return "m"
         }
     }
 
@@ -48,30 +62,61 @@ enum SnapLayout: String, CaseIterable {
         case .centerThird: return NSLocalizedString("snapLayout.centerThird", comment: "")
         case .rightThird: return NSLocalizedString("snapLayout.rightThird", comment: "")
         case .centerTwoThirds: return NSLocalizedString("snapLayout.centerTwoThirds", comment: "")
+        case .topLeftQuarter: return NSLocalizedString("snapLayout.topLeftQuarter", comment: "")
+        case .topRightQuarter: return NSLocalizedString("snapLayout.topRightQuarter", comment: "")
+        case .bottomLeftQuarter: return NSLocalizedString("snapLayout.bottomLeftQuarter", comment: "")
+        case .bottomRightQuarter: return NSLocalizedString("snapLayout.bottomRightQuarter", comment: "")
         }
     }
 
-    /// Horizontal placement as (originX, width) fractions of the visible frame. Height is always full.
-    var horizontalFractions: (x: CGFloat, w: CGFloat) {
+    /// First press (no digit, no prior same-key cycle) lands on this step.
+    var defaultSizeStep: SnapSizeStep {
         switch self {
-        case .leftHalf: return (0, 0.5)
-        case .rightHalf: return (0.5, 0.5)
-        case .centerHalf: return (0.25, 0.5)
-        case .leftThird: return (0, 1.0 / 3.0)
-        case .centerThird: return (1.0 / 3.0, 1.0 / 3.0)
-        case .rightThird: return (2.0 / 3.0, 1.0 / 3.0)
-        case .centerTwoThirds: return (1.0 / 6.0, 2.0 / 3.0)
+        case .leftHalf, .rightHalf, .centerHalf,
+             .topLeftQuarter, .topRightQuarter, .bottomLeftQuarter, .bottomRightQuarter:
+            return .half
+        case .leftThird, .centerThird, .rightThird:
+            return .third
+        case .centerTwoThirds:
+            return .twoThirds
         }
+    }
+
+    /// Horizontal + vertical placement as fractions of the visible frame. `y` is from the AppKit bottom.
+    func placement(sizeStep: SnapSizeStep) -> (x: CGFloat, w: CGFloat, y: CGFloat, h: CGFloat) {
+        let w = sizeStep.widthFraction
+        let x: CGFloat
+        switch self {
+        case .leftHalf, .leftThird, .topLeftQuarter, .bottomLeftQuarter:
+            x = 0
+        case .rightHalf, .rightThird, .topRightQuarter, .bottomRightQuarter:
+            x = 1 - w
+        case .centerHalf, .centerThird, .centerTwoThirds:
+            x = (1 - w) / 2
+        }
+        switch self {
+        case .topLeftQuarter, .topRightQuarter:
+            return (x, w, 0.5, 0.5)
+        case .bottomLeftQuarter, .bottomRightQuarter:
+            return (x, w, 0, 0.5)
+        default:
+            return (x, w, 0, 1)
+        }
+    }
+
+    /// Glyph fractions at the layout's default size (panel / prefs preview).
+    var glyphFractions: (x: CGFloat, w: CGFloat, y: CGFloat, h: CGFloat) {
+        placement(sizeStep: defaultSizeStep)
     }
 
     /// AppKit `visibleFrame` (bottom-left origin) → Quartz top-left frame for AX writes.
-    static func quartzRect(horizontal: (x: CGFloat, w: CGFloat), visibleFrameAppKit: CGRect,
-                           mainScreenFrameMaxY: CGFloat) -> CGRect {
+    static func quartzRect(placement: (x: CGFloat, w: CGFloat, y: CGFloat, h: CGFloat),
+                           visibleFrameAppKit: CGRect, mainScreenFrameMaxY: CGFloat) -> CGRect {
         let appKit = CGRect(
-            x: visibleFrameAppKit.minX + visibleFrameAppKit.width * horizontal.x,
-            y: visibleFrameAppKit.minY,
-            width: visibleFrameAppKit.width * horizontal.w,
-            height: visibleFrameAppKit.height)
+            x: visibleFrameAppKit.minX + visibleFrameAppKit.width * placement.x,
+            y: visibleFrameAppKit.minY + visibleFrameAppKit.height * placement.y,
+            width: visibleFrameAppKit.width * placement.w,
+            height: visibleFrameAppKit.height * placement.h)
         return CGRect(
             x: appKit.minX,
             y: mainScreenFrameMaxY - appKit.maxY,
@@ -79,9 +124,10 @@ enum SnapLayout: String, CaseIterable {
             height: appKit.height)
     }
 
-    func quartzRect(on screen: NSScreen) -> CGRect {
+    func quartzRect(on screen: NSScreen, sizeStep: SnapSizeStep) -> CGRect {
         let mainMaxY = NSMaxY(NSScreen.screens[0].frame)
-        return Self.quartzRect(horizontal: horizontalFractions, visibleFrameAppKit: screen.visibleFrame,
+        return Self.quartzRect(placement: placement(sizeStep: sizeStep),
+                               visibleFrameAppKit: screen.visibleFrame,
                                mainScreenFrameMaxY: mainMaxY)
     }
 
@@ -93,8 +139,7 @@ enum SnapLayout: String, CaseIterable {
         allCases.map(\.preferenceKey)
     }
 
-    /// Match a keyDown to a snap layout. Shift is ignored so `h` and `H` both select left half when the
-    /// binding is the letter without modifiers (vim navigation reuses the same letters outside snap mode).
+    /// Match a keyDown to a snap layout. Shift is ignored so `h` and `H` both select left half.
     static func layoutMatching(event: NSEvent) -> SnapLayout? {
         let eventKey = UInt32(event.keyCode)
         let eventMods = cocoaToCarbonFlags(event.modifierFlags).cleaned()
@@ -113,5 +158,17 @@ enum SnapLayout: String, CaseIterable {
             }
         }
         return nil
+    }
+
+    /// Digits `1`–`3` (no modifiers other than optional Shift) set the size step before a layout key.
+    static func sizeDigit(from event: NSEvent) -> Int? {
+        let blocked = event.modifierFlags.intersection([.option, .command, .control])
+        guard blocked.isEmpty else { return nil }
+        switch Int(event.keyCode) {
+        case kVK_ANSI_1: return 1
+        case kVK_ANSI_2: return 2
+        case kVK_ANSI_3: return 3
+        default: return nil
+        }
     }
 }

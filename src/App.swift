@@ -14,6 +14,14 @@ class App: AppCenterApplication {
     static let name = Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as! String
     static let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as! String
     static let buildDate = Bundle.main.object(forInfoDictionaryKey: "AltTabBuildDate") as? String ?? ""
+    static let gitHash = Bundle.main.object(forInfoDictionaryKey: "AltTabGitHash") as? String ?? ""
+    /// Compact line for Settings / About: `version · hash · build time`.
+    static var buildInfoSummary: String {
+        var parts = [version]
+        if !gitHash.isEmpty { parts.append(gitHash) }
+        if !buildDate.isEmpty { parts.append(buildDate) }
+        return parts.joined(separator: " · ")
+    }
     static let licence = Bundle.main.object(forInfoDictionaryKey: "NSHumanReadableCopyright") as! String
     static let repository = "https://github.com/lwouis/alt-tab-macos"
     static let appIcon: CGImage = {
@@ -165,7 +173,7 @@ class App: AppCenterApplication {
         TilesView.showSnapLayoutPanel()
     }
 
-    /// Space / Escape while the snap panel is open: focus without resizing.
+    /// Space while the snap panel is open: focus without resizing.
     static func focusSnapTargetWithoutResizing() {
         guard let window = SnapSession.lockedWindow else { return }
         SnapSession.clear()
@@ -173,17 +181,38 @@ class App: AppCenterApplication {
         focusSelectedWindow(window)
     }
 
+    /// Escape while snapping: clear a pending size digit first; otherwise leave snap and restore the
+    /// prior window-selection mode (hint mode unchanged). Does not focus the locked window.
+    static func handleSnapCancel() {
+        guard SnapSession.isActive else { return }
+        if SnapSession.pendingSizeStep != nil {
+            SnapSession.pendingSizeStep = nil
+            TilesView.refreshSnapLayoutPanelStatus()
+            return
+        }
+        SnapSession.clear()
+        TilesView.exitSnapLayoutModeToWindowSelection()
+    }
+
+    /// Layout key applies (default size, or pending `1`/`2`/`3`) and focuses immediately. Digits alone
+    /// only update the sizing preview and keep the panel open. Space focuses without further resize.
     static func applySnapLayout(_ layout: SnapLayout) {
         guard let window = SnapSession.lockedWindow else { return }
         let screen = NSScreen.screens.first { screen in
             guard let uuid = screen.cachedUuid() else { return false }
             return uuid == window.screenId
         } ?? NSScreen.preferred
-        let frame = layout.quartzRect(on: screen)
+        let step = SnapSession.resolveSizeStep(for: layout)
+        let frame = layout.quartzRect(on: screen, sizeStep: step)
         SnapSession.clear()
         TilesView.hideSnapLayoutPanel()
-        // Focus first so makeKey / orderOut are not queued behind AX setFrame (fullscreen exit can wait 1s+).
         focusSelectedWindow(window, thenSetFrame: frame)
+    }
+
+    static func setSnapPendingSizeDigit(_ digit: Int) {
+        guard SnapSession.isActive, let step = SnapSizeStep.fromDigit(digit) else { return }
+        SnapSession.pendingSizeStep = step
+        TilesView.refreshSnapLayoutPanelStatus()
     }
 
     @objc static func checkForUpdatesNow(_ sender: NSMenuItem) {
