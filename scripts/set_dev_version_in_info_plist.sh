@@ -10,9 +10,5 @@ fi
 VERSION=$(/bin/bash "${SRCROOT}/scripts/compute_dev_version.sh")
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion \"$VERSION\"" "$PLIST"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString \"$VERSION\"" "$PLIST"
-BUILD_DATE=$(date +"%Y-%m-%d %H:%M")
-if /usr/libexec/PlistBuddy -c "Print :AltTabBuildDate" "$PLIST" >/dev/null 2>&1; then
-  /usr/libexec/PlistBuddy -c "Set :AltTabBuildDate \"$BUILD_DATE\"" "$PLIST"
-else
-  /usr/libexec/PlistBuddy -c "Add :AltTabBuildDate string \"$BUILD_DATE\"" "$PLIST"
-fi
+# Hash + build time: shared with Release via inject_build_date_into_info_plist.sh
+/bin/bash "${SRCROOT}/scripts/inject_build_date_into_info_plist.sh"

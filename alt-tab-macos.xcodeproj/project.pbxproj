@@ -77,6 +77,8 @@
 		5E6010B00000000000000003 /* TileGridLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E6010B00000000000000001 /* TileGridLayout.swift */; };
 		5E6010B00000000000000102 /* TileGridLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E6010B00000000000000101 /* TileGridLayoutTests.swift */; };
 		SNAP01000000000000000002 /* SnapLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000001 /* SnapLayout.swift */; };
+		SNAP01000000000000000072 /* SnapSizeStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000071 /* SnapSizeStep.swift */; };
+		SNAP01000000000000000073 /* SnapSizeStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000071 /* SnapSizeStep.swift */; };
 		SNAP01000000000000000003 /* SnapLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000001 /* SnapLayout.swift */; };
 		SNAP01000000000000000012 /* SnapLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000011 /* SnapLayoutTests.swift */; };
 		SNAP01000000000000000032 /* SnapLayoutPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000031 /* SnapLayoutPanelView.swift */; };
@@ -568,6 +570,7 @@
 		5E6010B00000000000000001 /* TileGridLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileGridLayout.swift; sourceTree = "<group>"; };
 		5E6010B00000000000000101 /* TileGridLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileGridLayoutTests.swift; sourceTree = "<group>"; };
 		SNAP01000000000000000001 /* SnapLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapLayout.swift; sourceTree = "<group>"; };
+		SNAP01000000000000000071 /* SnapSizeStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapSizeStep.swift; sourceTree = "<group>"; };
 		SNAP01000000000000000011 /* SnapLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapLayoutTests.swift; sourceTree = "<group>"; };
 		SNAP01000000000000000021 /* SnapLayoutSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SnapLayoutSpecs.md; sourceTree = "<group>"; };
 		SNAP01000000000000000031 /* SnapLayoutPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapLayoutPanelView.swift; sourceTree = "<group>"; };
@@ -1735,6 +1738,7 @@
 			isa = PBXGroup;
 			children = (
 				SNAP01000000000000000001 /* SnapLayout.swift */,
+				SNAP01000000000000000071 /* SnapSizeStep.swift */,
 				SNAP01000000000000000021 /* SnapLayoutSpecs.md */,
 				SNAP01000000000000000011 /* SnapLayoutTests.swift */,
 				SNAP01000000000000000041 /* SnapSession.swift */,
@@ -2337,6 +2341,7 @@
 				5E6010B00000000000000003 /* TileGridLayout.swift in Sources */,
 				5E6010B00000000000000102 /* TileGridLayoutTests.swift in Sources */,
 				SNAP01000000000000000003 /* SnapLayout.swift in Sources */,
+				SNAP01000000000000000073 /* SnapSizeStep.swift in Sources */,
 				SNAP01000000000000000012 /* SnapLayoutTests.swift in Sources */,
 				5E7115000000000000000003 /* TilePool.swift in Sources */,
 				5E7115000000000000000102 /* TilePoolTests.swift in Sources */,
@@ -2462,6 +2467,7 @@
 				5E6010A00000000000000002 /* WindowTitle.swift in Sources */,
 				5E6010B00000000000000002 /* TileGridLayout.swift in Sources */,
 				SNAP01000000000000000002 /* SnapLayout.swift in Sources */,
+				SNAP01000000000000000072 /* SnapSizeStep.swift in Sources */,
 				SNAP01000000000000000042 /* SnapSession.swift in Sources */,
 				SNAP01000000000000000052 /* SnapLayoutGlyphView.swift in Sources */,
 				SNAP01000000000000000032 /* SnapLayoutPanelView.swift in Sources */,

@@ -3,7 +3,8 @@ import Cocoa
 /// Overlay listing snap presets with key badge + glyph + label. Hosted by `TilesView` while `SnapSession` is active.
 final class SnapLayoutPanelView: FlippedView {
     private let stack = NSStackView()
-    private var rowViews: [NSView] = []
+    private let statusLabel = NSTextField(labelWithString: "")
+    private var glyphs: [SnapLayout: SnapLayoutGlyphView] = [:]
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -26,14 +27,40 @@ final class SnapLayoutPanelView: FlippedView {
 
     func reload(fontColor: NSColor) {
         stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        rowViews.removeAll()
+        glyphs.removeAll(keepingCapacity: true)
         let title = NSTextField(labelWithString: NSLocalizedString("snapLayout.panelTitle", comment: ""))
         title.font = NSFont.systemFont(ofSize: 13, weight: .semibold)
         title.textColor = fontColor
         title.alignment = .center
         stack.addArrangedSubview(title)
+        statusLabel.font = NSFont.systemFont(ofSize: 11)
+        statusLabel.textColor = fontColor.withAlphaComponent(0.85)
+        statusLabel.alignment = .center
+        refreshStatus(fontColor: fontColor)
+        stack.addArrangedSubview(statusLabel)
         for layout in SnapLayout.allCases {
             stack.addArrangedSubview(makeRow(layout, fontColor: fontColor))
+        }
+        updateGlyphPreviews()
+    }
+
+    func refreshStatus(fontColor: NSColor? = nil) {
+        if let fontColor { statusLabel.textColor = fontColor.withAlphaComponent(0.85) }
+        if let pending = SnapSession.pendingSizeStep {
+            statusLabel.stringValue = String(format: NSLocalizedString("snapLayout.panelPendingSize", comment: ""),
+                                             pending.rawValue)
+        } else {
+            statusLabel.stringValue = NSLocalizedString("snapLayout.panelSizeHint", comment: "")
+        }
+        updateGlyphPreviews()
+    }
+
+    /// Pending digit redraws every row at that width; otherwise each row uses its default size.
+    private func updateGlyphPreviews() {
+        let pending = SnapSession.pendingSizeStep
+        for layout in SnapLayout.allCases {
+            guard let glyph = glyphs[layout] else { continue }
+            glyph.sizeStep = pending
         }
     }
 
@@ -51,22 +78,20 @@ final class SnapLayoutPanelView: FlippedView {
         keyBadge.layer?.cornerRadius = 4
         keyBadge.layer?.backgroundColor = NSColor.white.withAlphaComponent(0.12).cgColor
         keyBadge.setContentHuggingPriority(.required, for: .horizontal)
-        let keyWidth = keyBadge.widthAnchor.constraint(equalToConstant: 28)
-        keyWidth.isActive = true
+        keyBadge.widthAnchor.constraint(equalToConstant: 28).isActive = true
         let glyph = SnapLayoutGlyphView()
         glyph.layout = layout
         glyph.outlineColor = fontColor.withAlphaComponent(0.7)
         glyph.fillColor = NSColor.controlAccentColor
         glyph.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
-            glyph.widthAnchor.constraint(equalToConstant: 36),
-            glyph.heightAnchor.constraint(equalToConstant: 24),
+            glyph.widthAnchor.constraint(equalToConstant: 40),
+            glyph.heightAnchor.constraint(equalToConstant: 26),
         ])
+        glyphs[layout] = glyph
         let label = NSTextField(labelWithString: layout.localizedTitle)
         label.font = NSFont.systemFont(ofSize: 12)
         label.textColor = fontColor
-        label.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        // Fixed label width so every row’s key+glyph column lines up while the block stays centered.
         let labelWidth = label.widthAnchor.constraint(equalToConstant: 140)
         labelWidth.priority = .defaultHigh
         labelWidth.isActive = true

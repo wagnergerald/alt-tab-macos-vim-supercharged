@@ -4,33 +4,37 @@
 
 Snap mode opens when the user confirms a window with **Enter** (`focusAndSnapWindowShortcut`), or when they
 complete a window hint with an **uppercase** letter (e.g. `H` for hint `h`) in focus-hint mode. The switcher
-stays open and shows a snap panel of fixed Rectangle-style presets. Choosing a preset key moves/resizes the
-locked window on its screen via AX, then focuses it. **Space** / **Escape** in that mode focus without
-resizing. Lowercase hint letters still focus immediately, unchanged.
+stays open and shows a snap panel. A **layout key** (`k`, `l`, …) applies that layout at its default size and
+**focuses immediately**. Digits `1`/`2`/`3` only set a pending size (panel stays open, glyphs update); the
+next layout key then applies that size and focuses. **Space** focuses without further resizing. **Escape**
+steps back: clears a pending digit, else leaves snap and restores the same window-selection mode as before
+snap (e.g. focus hints after an uppercase hint); another Escape then leaves hint mode / dismisses as usual.
+Lowercase hint letters still focus immediately.
 
-`SnapLayout` owns the preset list, preference key ids, default keys, and the AppKit-`visibleFrame` → Quartz
-top-left rect math used by AX `kAXPosition` / `kAXSize`.
+Width follows `SnapSizeStep`: `1` = half, `2` = two-thirds (larger), `3` = one-third.
+
+Quarters (`y`/`p`/`n`/`m`) use the top or bottom half of `visibleFrame` and the same width steps.
 
 ## Behavior & edge cases
 
 - **Fractions are of `visibleFrame`**, not `frame`, so the menu bar and Dock stay clear.
-- **Height is always the full visible height**; only the horizontal band changes.
+- **Full-height layouts** use `h = 1`; quarters use `h = 0.5` with `y` from the AppKit bottom.
 - **Quartz Y** is `mainScreenFrameMaxY - appKitMaxY`, matching `Window.isOnScreen`'s screen conversion.
-- **Target screen** is the locked window's current screen, falling back to `NSScreen.preferred`.
-- **Enter with no selectable window / windowless app** is a no-op (does not enter snap).
-- **Enter in non-focus hint modes** (minimize/close/quit/…) is a no-op.
-- **Fullscreen / minimized** windows: exit that state before applying the frame (best-effort, delayed like
-  `Window.minDemin`).
-- **Hold-release and mouse click** never enter snap; only Enter does.
-- **Pattern shortcuts** only act while `SnapSession` is active; they no-op otherwise.
+- **Target screen** is the locked window’s current screen, falling back to `NSScreen.preferred`.
+- **Enter with no selectable window / windowless app** is a no-op.
+- **Layout keys always dismiss** after applying (focus + close panel).
+- **Digits alone do not dismiss**; they only arm a size for the next layout key.
+- **Escape** clears a pending digit first; otherwise exits snap without focusing and keeps the prior hint mode.
+- **Pending digit** is cleared after the next layout key, Escape, or session end.
+- **Glyph previews** redraw to the pending digit’s width while a digit is armed.
 
 ## Scenarios
 
-- `testLeftHalfUsesFirstHalfOfVisibleWidth` — left half origin at visible minX, width = half.
-- `testRightHalfStartsAtMidpoint` — right half origin at midX.
-- `testCenterHalfStartsAtQuarter` — center half at 25% width, half wide.
-- `testThirdsPartitionVisibleWidth` — left/center/right thirds abut without gaps.
-- `testCenterTwoThirdsIsCentered` — origin at 1/6, width 2/3.
-- `testQuartzYFlipsFromAppKitVisibleFrame` — top of visible frame maps to Quartz y correctly.
-- `testPreferenceKeysAreUniqueAndStable` — each case has a distinct `preferenceKey`.
-- `testDefaultKeyEquivalentsAreVimKeys` — defaults are `h`/`l`/`k`/`j`/`u`/`i`/`o` (Shift+letter also matches at runtime).
+- `testLeftHalfUsesFirstHalfOfVisibleWidth`
+- `testLargerRightHalfIsTwoThirds`
+- `testSmallerLeftHalfIsOneThird`
+- `testTopLeftQuarterUsesTopBand`
+- `testBottomRightQuarterUsesBottomBand`
+- `testSizeStepDigitsMapToFractions`
+- `testDefaultKeyEquivalentsIncludeQuarters`
+- `testPreferenceKeysAreUniqueAndStable`

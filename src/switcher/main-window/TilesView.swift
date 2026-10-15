@@ -78,10 +78,25 @@ class TilesView {
         updateChooserBannerForSnapMode()
     }
 
+    static func refreshSnapLayoutPanelStatus() {
+        guard SnapSession.isActive, !snapLayoutPanel.isHidden else { return }
+        snapLayoutPanel.refreshStatus(fontColor: Appearance.fontColor)
+        updateChooserBannerForSnapMode()
+    }
+
     static func hideSnapLayoutPanel() {
         snapLayoutPanel.isHidden = true
         snapLayoutPanel.removeFromSuperview()
         scrollView?.isHidden = false
+        syncWindowHintsChromeBanners()
+    }
+
+    /// Leave snap UI without focusing the locked window. Keeps the chooser hint mode that was active
+    /// before the uppercase/Enter snap entry (e.g. focus hints), matching pre-snap AltTab behavior.
+    static func exitSnapLayoutModeToWindowSelection() {
+        hideSnapLayoutPanel()
+        focusSelectedTileIfPossible()
+        applyWindowHintLabels()
         syncWindowHintsChromeBanners()
     }
 
@@ -94,7 +109,10 @@ class TilesView {
         guard Preferences.windowHintsEnabled else { return }
         chooserBannerLabel.isHidden = false
         let title = NSLocalizedString("snapLayout.bannerTitle", comment: "")
-        let detail = NSLocalizedString("snapLayout.bannerDetail", comment: "")
+        var detail = NSLocalizedString("snapLayout.bannerDetail", comment: "")
+        if let pending = SnapSession.pendingSizeStep {
+            detail = String(format: NSLocalizedString("snapLayout.panelPendingSize", comment: ""), pending.rawValue)
+        }
         let result = NSMutableAttributedString(
             string: title + " ",
             attributes: [.font: chooserBannerTitleFont(), .foregroundColor: Appearance.fontColor])
