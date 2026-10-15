@@ -2,6 +2,7 @@ import Cocoa
 
 class TileView: FlippedView {
     static let noOpenWindowToolTip = NSLocalizedString("App is running but has no open window", comment: "")
+    static let previewUnavailableToolTip = NSLocalizedString("Window preview unavailable", comment: "")
     // when calculating the width of a nstextfield, somehow we need to add this suffix to get the correct width
     static let extraTextForPadding = "lmnopqrstuvw"
 
@@ -14,6 +15,7 @@ class TileView: FlippedView {
     var dockLabelIcon = TileFontIconView(badgeSize: TileFontIconView.badgeBaseSize(forIconSize: TileView.iconSize().width))
     var windowHintBadge = WindowHintLabelView()
     var windowlessAppIndicator = WindowlessAppIndicator(tooltip: TileView.noOpenWindowToolTip)
+    var previewUnavailableIndicator = PreviewUnavailableIndicator(tooltip: TileView.previewUnavailableToolTip)
     private var fullTitle = ""
     private var fullTitleWidth = CGFloat(0)
     private struct TruncationKey: Hashable {
@@ -137,6 +139,8 @@ class TileView: FlippedView {
         layer!.addSublayer(thumbnail)
         addSubviews([label, statusIcons])
         setSubviewAbove(windowlessAppIndicator)
+        setSubviewAbove(previewUnavailableIndicator)
+        previewUnavailableIndicator.isHidden = true
         addSubview(dockLabelIcon)
         windowHintBadge.isHidden = true
         addSubview(windowHintBadge)
@@ -152,6 +156,7 @@ class TileView: FlippedView {
         TileView.disableImplicitLayerAnimations(on: label)
         TileView.disableImplicitLayerAnimations(on: statusIcons)
         TileView.disableImplicitLayerAnimations(on: windowlessAppIndicator)
+        TileView.disableImplicitLayerAnimations(on: previewUnavailableIndicator)
         TileView.disableImplicitLayerAnimations(on: dockLabelIcon)
         applyShadows()
     }
@@ -167,6 +172,7 @@ class TileView: FlippedView {
         label.reapplyAppearance()
         statusIcons.reapplyAppearance()
         windowlessAppIndicator.reapplyAppearance()
+        previewUnavailableIndicator.reapplyAppearance()
         rebuildDockLabelIcon()
         applyShadows()
         applyCurrentStyle()
@@ -312,6 +318,9 @@ class TileView: FlippedView {
 
     private func updateValues(_ element: Window, _ index: Int) {
         assignIfDifferent(&windowlessAppIndicator.isHidden, !element.isWindowlessApp)
+        // Real window, no usable screenshot (blocked capture / still empty) — lock overlay on the soft card.
+        let showPreviewLock = !element.isWindowlessApp && element.thumbnail == nil && !Appearance.hideThumbnails
+        assignIfDifferent(&previewUnavailableIndicator.isHidden, !showPreviewLock)
         statusIcons.update(
             isHidden: element.isHidden && !Preferences.hideStatusIcons,
             isFullscreen: element.isFullscreen && !Preferences.hideStatusIcons,
@@ -328,14 +337,27 @@ class TileView: FlippedView {
                 thumbnail.contentsGravity = .resize
                 let thumbnailSize = TileView.thumbnailSize(element.thumbnailArea?.size, false)
                 thumbnail.updateContents(screenshot, thumbnailSize)
-            } else {
-                let reservesWindowGeometry = ThumbnailPlaceholderLayout.reservesWindowGeometry(
-                    element.size, screenRecordingGranted: ScreenRecordingPermission.status == .granted)
-                thumbnail.contentsGravity = reservesWindowGeometry ? .resizeAspect : .resize
-                let sourceSize = reservesWindowGeometry ? element.size : element.icon?.size()
-                let thumbnailSize = TileView.thumbnailSize(sourceSize, !reservesWindowGeometry)
+            } else if element.isWindowlessApp {
+                // Real “no window” row: show the app icon (not the soft card) so the windowless badge stays clear.
+                thumbnail.contentsGravity = .resize
+                let thumbnailSize = TileView.thumbnailSize(element.icon?.size(), true)
                 if element.icon == nil { thumbnail.releaseImage() }
                 thumbnail.updateContents(.cgImage(element.icon), thumbnailSize)
+            } else {
+                // Soft card + centered app icon (KeePassXC et al. block capture → empty otherwise).
+                let reservesWindowGeometry = ThumbnailPlaceholderLayout.reservesWindowGeometry(
+                    element.size, screenRecordingGranted: ScreenRecordingPermission.status == .granted)
+                let sourceSize = reservesWindowGeometry ? element.size : element.icon?.size()
+                let thumbnailSize = TileView.thumbnailSize(sourceSize, !reservesWindowGeometry)
+                thumbnail.contentsGravity = .resize
+                let scale = NSScreen.preferred.backingScaleFactor
+                if let card = ThumbnailPlaceholder.compose(icon: element.icon, pointSize: thumbnailSize, scale: scale) {
+                    thumbnail.updateContents(.cgImage(card), thumbnailSize)
+                } else if element.icon == nil {
+                    thumbnail.releaseImage()
+                } else {
+                    thumbnail.updateContents(.cgImage(element.icon), thumbnailSize)
+                }
             }
         }
         let title = getAppOrAndWindowTitle()
@@ -626,6 +648,7 @@ class TileView: FlippedView {
             thumbnail.centerInSuperlayer(x: true)
         }
         updateWindowlessAppIndicatorPosition()
+        updatePreviewUnavailableIndicatorPosition()
         updateDockLabelIconPosition()
         updateWindowHintBadgePosition()
     }
@@ -683,6 +706,24 @@ class TileView: FlippedView {
         windowlessAppIndicator.needsDisplay = true
     }
 
+    private func updatePreviewUnavailableIndicatorPosition() {
+        guard !previewUnavailableIndicator.isHidden else { return }
+        let style = Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex)
+        let verticalOffset: CGFloat = style == .titles ? 2 : 4
+        let x: CGFloat
+        let y: CGFloat
+        if style == .thumbnails {
+            x = thumbnail.frame.origin.x + ((thumbnail.frame.width - previewUnavailableIndicator.frame.width) / 2).rounded()
+            y = (thumbnail.frame.maxY - previewUnavailableIndicator.frame.height + verticalOffset).rounded()
+        } else {
+            x = (appIcon.frame.midX - previewUnavailableIndicator.frame.width / 2).rounded()
+            y = (appIcon.frame.maxY - previewUnavailableIndicator.frame.height + verticalOffset).rounded()
+        }
+        assignIfDifferent(&previewUnavailableIndicator.frame.origin.x, x)
+        assignIfDifferent(&previewUnavailableIndicator.frame.origin.y, y)
+        previewUnavailableIndicator.needsDisplay = true
+    }
+
     private func windowlessIndicatorXPosition() -> CGFloat {
         if Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex) == .thumbnails {
             return thumbnail.frame.origin.x + ((thumbnail.frame.width - windowlessAppIndicator.frame.width) / 2).rounded()
@@ -691,7 +732,9 @@ class TileView: FlippedView {
     }
 
     private func windowlessIndicatorYPosition() -> CGFloat {
-        let verticalOffset = Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex) == .titles ? CGFloat(5) : CGFloat(10)
+        // Sit on the lower edge of the icon/thumbnail so the empty-window glyph stays visible.
+        let verticalOffset = Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex) == .titles
+            ? CGFloat(2) : CGFloat(4)
         if Preferences.effectiveAppearanceStyle(SwitcherSession.activeShortcutIndex) == .thumbnails {
             return (thumbnail.frame.maxY - windowlessAppIndicator.frame.height + verticalOffset).rounded()
         }

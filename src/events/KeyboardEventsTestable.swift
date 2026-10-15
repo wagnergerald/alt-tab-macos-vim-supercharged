@@ -145,7 +145,7 @@ private func activePanelShortcutsSameBinding(_ a: String, _ b: String) -> Bool {
 }
 
 private func searchFieldBlocksWindowHints() -> Bool {
-    TilesView.isSearchEditing && !TilesView.searchFieldYieldsToHints
+    TilesView.searchFieldCapturesKeys
 }
 
 private func matchesActivePanelShortcut(_ event: NSEvent, _ shortcutId: String) -> Bool {

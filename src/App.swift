@@ -160,6 +160,9 @@ class App: AppCenterApplication {
     /// Enter: lock the selected window and show the snap panel. Switcher stays open.
     static func enterSnapLayoutMode() {
         guard SwitcherSession.isActive, !SnapSession.isActive else { return }
+        // While the `/` field owns typing, Enter confirms focus (see ShortcutAction). After Tab yields
+        // to hints, uppercase hint / Enter still open the sizing panel.
+        guard !TilesView.searchFieldCapturesKeys else { return }
         switch TilesView.chooserHintMode {
         case .normal, .focusHints: break
         default: return

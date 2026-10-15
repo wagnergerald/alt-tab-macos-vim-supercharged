@@ -90,6 +90,9 @@
 		SNAP01000000000000000002 /* SnapLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000001 /* SnapLayout.swift */; };
 		SNAP01000000000000000072 /* SnapSizeStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000071 /* SnapSizeStep.swift */; };
 		SNAP01000000000000000073 /* SnapSizeStep.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000071 /* SnapSizeStep.swift */; };
+		THUMB01000000000000000002 /* ThumbnailPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = THUMB01000000000000000001 /* ThumbnailPlaceholder.swift */; };
+		THUMB01000000000000000003 /* ThumbnailPlaceholder.swift in Sources */ = {isa = PBXBuildFile; fileRef = THUMB01000000000000000001 /* ThumbnailPlaceholder.swift */; };
+		THUMB01000000000000000012 /* ThumbnailPlaceholderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = THUMB01000000000000000011 /* ThumbnailPlaceholderTests.swift */; };
 		SNAP01000000000000000003 /* SnapLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000001 /* SnapLayout.swift */; };
 		SNAP01000000000000000012 /* SnapLayoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000011 /* SnapLayoutTests.swift */; };
 		SNAP01000000000000000032 /* SnapLayoutPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SNAP01000000000000000031 /* SnapLayoutPanelView.swift */; };
@@ -269,6 +272,7 @@
 		BF0C853B271C4407E87FA183 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = BF0C8096A88BC18C4902C037 /* InfoPlist.strings */; };
 		BF0C85DA2D285400801C514A /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF0C8B841E890CA0D68FFD86 /* Logger.swift */; };
 		BF0C860F1779DDE8C0171EA0 /* WindowlessAppIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF0C896FD4907CD85D62C124 /* WindowlessAppIndicator.swift */; };
+		LOCK01000000000000000002 /* PreviewUnavailableIndicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = LOCK01000000000000000001 /* PreviewUnavailableIndicator.swift */; };
 		BF0C8658CC748011E57691B7 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = BF0C84F4B25A7C26A88ADE92 /* Localizable.strings */; };
 		BF0C8668A861AD9E42D26842 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = BF0C833142DB4D7FFAB5A693 /* InfoPlist.strings */; };
 		BF0C86B26D16AFC588C88DB4 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = BF0C824B8E96CBEA7A757FC3 /* Localizable.strings */; };
@@ -584,6 +588,9 @@
 		5E6010B00000000000000101 /* TileGridLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TileGridLayoutTests.swift; sourceTree = "<group>"; };
 		SNAP01000000000000000001 /* SnapLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapLayout.swift; sourceTree = "<group>"; };
 		SNAP01000000000000000071 /* SnapSizeStep.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapSizeStep.swift; sourceTree = "<group>"; };
+		THUMB01000000000000000001 /* ThumbnailPlaceholder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailPlaceholder.swift; sourceTree = "<group>"; };
+		THUMB01000000000000000011 /* ThumbnailPlaceholderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThumbnailPlaceholderTests.swift; sourceTree = "<group>"; };
+		THUMB01000000000000000021 /* ThumbnailPlaceholderSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = ThumbnailPlaceholderSpecs.md; sourceTree = "<group>"; };
 		SNAP01000000000000000011 /* SnapLayoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapLayoutTests.swift; sourceTree = "<group>"; };
 		SNAP01000000000000000021 /* SnapLayoutSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SnapLayoutSpecs.md; sourceTree = "<group>"; };
 		SNAP01000000000000000031 /* SnapLayoutPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnapLayoutPanelView.swift; sourceTree = "<group>"; };
@@ -747,6 +754,7 @@
 		BF0C88B52EDB82E1CCA1468A /* zh-HK */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = "zh-HK"; path = InfoPlist.strings; sourceTree = "<group>"; };
 		BF0C895E5D9E3F43E1CA9FC1 /* vi */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = vi; path = InfoPlist.strings; sourceTree = "<group>"; };
 		BF0C896FD4907CD85D62C124 /* WindowlessAppIndicator.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WindowlessAppIndicator.swift; sourceTree = "<group>"; };
+		LOCK01000000000000000001 /* PreviewUnavailableIndicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewUnavailableIndicator.swift; sourceTree = "<group>"; };
 		BF0C8998862E0E04D60CACBC /* MacroPreferences.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MacroPreferences.swift; sourceTree = "<group>"; };
 		BF0C899905524253DC170B56 /* KeyboardEventsTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KeyboardEventsTests.swift; sourceTree = "<group>"; };
 		BF0C89D7F23D82A3FF442E0B /* build_app.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; path = build_app.sh; sourceTree = "<group>"; };
@@ -1436,6 +1444,9 @@
 				1C961AC3633CD0C62CCE050E /* Appearance.swift */,
 				BF0C8D57C86AF492D43A576D /* AppearanceTestable.swift */,
 				BF0C84933936C6FE676CD33C /* AppearanceTests.swift */,
+				THUMB01000000000000000001 /* ThumbnailPlaceholder.swift */,
+				THUMB01000000000000000021 /* ThumbnailPlaceholderSpecs.md */,
+				THUMB01000000000000000011 /* ThumbnailPlaceholderTests.swift */,
 				AA974BA829B7D84C0099A29E /* PreviewPanel.swift */,
 				BF0C8D606B53D315F2D9927B /* KeyRepeatTimer.swift */,
 				5E5EA12E0000000000000001 /* KeyRepeatTimerTestable.swift */,
@@ -1611,6 +1622,7 @@
 				1C96189273B7482124C36F4C /* Switch.swift */,
 				1C9617C5839903D752070CF2 /* ImageTextButtonView.swift */,
 				BF0C896FD4907CD85D62C124 /* WindowlessAppIndicator.swift */,
+				LOCK01000000000000000001 /* PreviewUnavailableIndicator.swift */,
 				BF0C8E63BE7394A6591E74E0 /* LightImageView.swift */,
 				BF0C8E64BE7394A6591E74E1 /* LightImageLayer.swift */,
 				BF0C8DC2A355E29516DD2FAF /* CustomRecorderControlTestable.swift */,
@@ -2354,6 +2366,8 @@
 				5E6010B00000000000000102 /* TileGridLayoutTests.swift in Sources */,
 				SNAP01000000000000000003 /* SnapLayout.swift in Sources */,
 				SNAP01000000000000000073 /* SnapSizeStep.swift in Sources */,
+				THUMB01000000000000000003 /* ThumbnailPlaceholder.swift in Sources */,
+				THUMB01000000000000000012 /* ThumbnailPlaceholderTests.swift in Sources */,
 				SNAP01000000000000000012 /* SnapLayoutTests.swift in Sources */,
 				5E7115000000000000000003 /* TilePool.swift in Sources */,
 				5E7115000000000000000102 /* TilePoolTests.swift in Sources */,
@@ -2509,6 +2523,7 @@
 				5E6010B00000000000000002 /* TileGridLayout.swift in Sources */,
 				SNAP01000000000000000002 /* SnapLayout.swift in Sources */,
 				SNAP01000000000000000072 /* SnapSizeStep.swift in Sources */,
+				THUMB01000000000000000002 /* ThumbnailPlaceholder.swift in Sources */,
 				SNAP01000000000000000042 /* SnapSession.swift in Sources */,
 				SNAP01000000000000000052 /* SnapLayoutGlyphView.swift in Sources */,
 				SNAP01000000000000000032 /* SnapLayoutPanelView.swift in Sources */,
@@ -2683,6 +2698,7 @@
 				1C961F9CF4F1BEDF04ACAEE0 /* Switch.swift in Sources */,
 				1C96182D2ECA735740ED474E /* ImageTextButtonView.swift in Sources */,
 				BF0C860F1779DDE8C0171EA0 /* WindowlessAppIndicator.swift in Sources */,
+				LOCK01000000000000000002 /* PreviewUnavailableIndicator.swift in Sources */,
 				BF0C8A3F32B2177AF407DC7E /* DockEvents.swift in Sources */,
 				BF0C8FACE000000000000002 /* WindowServerEvents.swift in Sources */,
 				5A1100000000000000020012 /* WindowAttentionEvents.swift in Sources */,

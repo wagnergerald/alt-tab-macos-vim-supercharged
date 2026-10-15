@@ -61,6 +61,17 @@ final class WindowOrderResolverTests: XCTestCase {
                                                           windowlessAtEnd: false, sortType: .recentlyFocused))
     }
 
+    /// Filtering used to rank by search alone and interleave windowless with real windows (including
+    /// lock-preview tiles). With "show at the end", windowless stay after every real match.
+    func testWindowlessStaysAtEndDuringSearchWhenConfigured() {
+        let windowlessMatch = w(searchMatches: true, searchRelevance: 9, isWindowlessApp: true)
+        let realMatch = w(searchMatches: true, searchRelevance: 1, isWindowlessApp: false)
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(realMatch, windowlessMatch,
+                                                          searchActive: true, windowlessAtEnd: true))
+        XCTAssertFalse(WindowOrderResolver.isOrderedBefore(windowlessMatch, realMatch,
+                                                           searchActive: true, windowlessAtEnd: true))
+    }
+
     func testHiddenPushedToEndWhenConfigured() {
         XCTAssertFalse(WindowOrderResolver.isOrderedBefore(w(isHidden: true), w(isHidden: false),
                                                            hiddenAtEnd: true))
