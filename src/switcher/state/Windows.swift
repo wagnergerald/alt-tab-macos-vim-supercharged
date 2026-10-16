@@ -555,8 +555,14 @@ class Windows {
         let hiddenAtEnd = Preferences.showHiddenWindows(shortcutIndex) == .showAtTheEnd
         let minimizedAtEnd = Preferences.showMinimizedWindows(shortcutIndex) == .showAtTheEnd
         let sortType = orderSortType(Preferences.windowOrder(shortcutIndex))
+        // Context app = who the user is leaving (MRU front). Scores are app-affinity only (v1).
+        let fromBundle: String? = sortType == .mostProbable
+            ? list.first(where: { $0.lastFocusOrder == 0 })?.application.bundleIdentifier : nil
+        let weights = sortType == .mostProbable ? AppTransitionStats.weightSnapshot() : [:]
         // Precompute each window's ordering facts once (O(n) Search calls), then sort on the snapshots.
-        let facts = Dictionary(uniqueKeysWithValues: list.map { (ObjectIdentifier($0), orderWindow($0, query, searchActive)) })
+        let facts = Dictionary(uniqueKeysWithValues: list.map {
+            (ObjectIdentifier($0), orderWindow($0, query, searchActive, fromBundle: fromBundle, weights: weights))
+        })
         list.sort {
             WindowOrderResolver.isOrderedBefore(
                 facts[ObjectIdentifier($0)]!, facts[ObjectIdentifier($1)]!,
@@ -568,12 +574,18 @@ class Windows {
         }
     }
 
-    private static func orderWindow(_ window: Window, _ query: String, _ searchActive: Bool) -> OrderWindow {
-        OrderWindow(
+    private static func orderWindow(_ window: Window, _ query: String, _ searchActive: Bool,
+                                    fromBundle: String?,
+                                    weights: [String: [String: Double]]) -> OrderWindow {
+        let score = weights.isEmpty ? 0
+            : MostProbableOrder.appScore(toBundle: window.application.bundleIdentifier,
+                                         fromBundle: fromBundle, weights: weights)
+        return OrderWindow(
             state: window.state,
             app: window.application.state,
             searchMatches: searchActive ? Search.matches(window, query: query) : false,
-            searchRelevance: searchActive ? Search.relevance(for: window, query: query) : 0)
+            searchRelevance: searchActive ? Search.relevance(for: window, query: query) : 0,
+            probableScore: score)
     }
 
     private static func orderSortType(_ p: WindowOrderPreference) -> OrderSortType {
@@ -582,6 +594,7 @@ class Windows {
             case .recentlyCreated: return .recentlyCreated
             case .alphabetical: return .alphabetical
             case .space: return .space
+            case .mostProbable: return .mostProbable
         }
     }
 

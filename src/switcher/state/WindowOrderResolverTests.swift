@@ -6,20 +6,22 @@ import XCTest
 /// in, `Bool` out.
 ///
 /// Groups: A search ranking · B show-at-the-end buckets · C recentlyFocused · D recentlyCreated ·
-/// E alphabetical · F space · G tiebreak/symmetry.
+/// E alphabetical · F space · G tiebreak/symmetry · H mostProbable.
 final class WindowOrderResolverTests: XCTestCase {
 
     private func w(searchMatches: Bool = false, searchRelevance: Double = 0,
                    isWindowlessApp: Bool = false, isHidden: Bool = false, isMinimized: Bool = false,
                    isOnAllSpaces: Bool = false, spaceIndexes: [Int] = [],
                    lastFocusOrder: Int = 0, creationOrder: Int = 0,
-                   appName: String = "App", windowTitle: String = "Title") -> OrderWindow {
+                   appName: String = "App", windowTitle: String = "Title",
+                   probableScore: Double = 0) -> OrderWindow {
         let state = WindowState(id: "w", isPhantom: false, isWindowlessApp: isWindowlessApp,
                                 isFullscreen: false, isMinimized: isMinimized, isTabbed: false,
                                 isOnAllSpaces: isOnAllSpaces, spaceIds: [], spaceIndexes: spaceIndexes,
                                 lastFocusOrder: lastFocusOrder, creationOrder: creationOrder, title: windowTitle)
         let app = ApplicationState(pid: 0, bundleIdentifier: nil, localizedName: appName, isHidden: isHidden)
-        return OrderWindow(state: state, app: app, searchMatches: searchMatches, searchRelevance: searchRelevance)
+        return OrderWindow(state: state, app: app, searchMatches: searchMatches, searchRelevance: searchRelevance,
+                           probableScore: probableScore)
     }
 
     // MARK: - A. Search ranking
@@ -166,6 +168,33 @@ final class WindowOrderResolverTests: XCTestCase {
     func testEqualWindowsAreNotOrderedBeforeEachOther() {
         let a = w(lastFocusOrder: 3)
         XCTAssertFalse(WindowOrderResolver.isOrderedBefore(a, a, sortType: .recentlyFocused))
+    }
+
+    // MARK: - H. Most probable
+
+    func testMostProbablePinsFirstThreeByMru() {
+        // Slot 2 (pinned) beats a high-score unpinned window.
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(
+            w(lastFocusOrder: 2, probableScore: 0),
+            w(lastFocusOrder: 3, probableScore: 9),
+            sortType: .mostProbable, pinCount: 3))
+        // Within the pin band, MRU wins over score.
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(
+            w(lastFocusOrder: 0, probableScore: 0),
+            w(lastFocusOrder: 1, probableScore: 9),
+            sortType: .mostProbable, pinCount: 3))
+    }
+
+    func testMostProbableUnpinnedRanksByScoreThenMru() {
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(
+            w(lastFocusOrder: 5, probableScore: 0.8),
+            w(lastFocusOrder: 4, probableScore: 0.2),
+            sortType: .mostProbable, pinCount: 3))
+        // Equal score (e.g. two Chrome windows sharing app affinity) → MRU.
+        XCTAssertTrue(WindowOrderResolver.isOrderedBefore(
+            w(lastFocusOrder: 4, probableScore: 0.5),
+            w(lastFocusOrder: 5, probableScore: 0.5),
+            sortType: .mostProbable, pinCount: 3))
     }
 }
 

@@ -705,6 +705,7 @@ class App: AppCenterApplication {
         #endif
         SearchDiscoveryHint.shared.initialize()
         UsageStats.prune()
+        AppTransitionStats.prune()
         // Created now rather than on the first prompt: its observers cancel prompts queued before that.
         let promptHost = ProPromptHost.shared
         ProTransitionManager.shared.onAction = { promptHost.dispatch($0) }
@@ -837,6 +838,7 @@ extension App: NSApplicationDelegate {
         setNativeCommandTabEnabled(true)
         // usage counters are appended in memory and written back on a debounce; land the pending ones
         UsageStats.flushNow()
+        AppTransitionStats.flushNow()
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {

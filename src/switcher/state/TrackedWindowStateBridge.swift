@@ -188,6 +188,8 @@ class TrackedWindowStateBridge {
                 }
             case .applyFocus(let wid):
                 if let w = Windows.byWindowId[wid] {
+                    // Learn app→app switches for Most Probable ordering (same-app bumps are ignored).
+                    AppTransitionStats.recordFocusMove(toBundle: w.application.bundleIdentifier)
                     w.application.focusedWindow = w
                     App.checkIfShortcutsShouldBeDisabled(w, nil)
                     WindowThumbnails.captureFocusedInBackground(w)
