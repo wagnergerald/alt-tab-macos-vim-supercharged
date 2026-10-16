@@ -157,6 +157,8 @@ enum WindowOrderPreference: CaseIterable, MacroPreference {
     case recentlyCreated
     case alphabetical
     case space
+    // Appended: persisted indices 0…3 must stay stable for existing installs.
+    case mostProbable
 
     var localizedString: LocalizedString {
         switch self {
@@ -164,6 +166,7 @@ enum WindowOrderPreference: CaseIterable, MacroPreference {
             case .recentlyCreated: return NSLocalizedString("Recently Created First", comment: "")
             case .alphabetical: return NSLocalizedString("Alphabetical Order", comment: "")
             case .space: return NSLocalizedString("Space Order", comment: "")
+            case .mostProbable: return NSLocalizedString("Most Probable", comment: "")
         }
     }
 }

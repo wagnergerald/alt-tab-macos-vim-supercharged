@@ -186,7 +186,39 @@ Existing user defaults are not rewritten except the snap digit migration above.
 
 ---
 
-## 5. Thumbnail placeholders & tile badges (working tree)
+## 5. Most Probable window order
+
+New `WindowOrderPreference` / `OrderSortType` case **`.mostProbable`** (appended after Space so
+persisted indices 0–3 stay stable). Absent upstream. Preference key stays `windowOrder` /
+`windowOrder{N}`; UI label **“Most Probable”**.
+
+### List shape
+
+| Positions | Rule |
+|-----------|------|
+| **1–3** | Hard pin: last three focused windows (MRU slots 0–2). |
+| **4+** | Soft rank by decayed **app** transition probability, then MRU. |
+
+Default selection stays “previously focused” (slot 1). Show-at-end buckets and search ranking
+unchanged.
+
+### v1 model (shipped)
+
+- Learns **app→app** focus transitions (`bundleIdentifier`) into a local suite
+  (`AppTransitionStats`); half-life ~1.5 days.
+- Context app at sort time = MRU front (who you are leaving).
+- Chrome / title churn: **app score only** — titles never enter the table; same-app focus bumps
+  are not recorded. Within one app, windows break ties by MRU.
+- Cold start (empty table) degrades to classic MRU.
+
+Deferred: title affinity for stable-title apps, pin-count preference, denylist UI.
+
+Specs/tests: `MostProbableOrderSpecs.md`, `MostProbableOrderTests.swift`; resolver cases under
+`WindowOrderResolver` §H.
+
+---
+
+## 6. Thumbnail placeholders & tile badges (working tree)
 
 Not fully committed at inventory time; implemented in the working tree.
 
@@ -216,7 +248,7 @@ windows stay in the normal (real) bucket.
 
 ---
 
-## 6. Dev build identity, versioning, About
+## 7. Dev build identity, versioning, About
 
 ### AltTabDev bundle
 
@@ -242,7 +274,7 @@ Shown as:
 
 ---
 
-## 7. License / Keychain / AppCenter (dev ergonomics)
+## 8. License / Keychain / AppCenter (dev ergonomics)
 
 ### Debug license storage
 
@@ -266,7 +298,7 @@ noise from the self-signed AltTabDev identity).
 
 ---
 
-## 8. Agent / build workflow docs (repo hygiene)
+## 9. Agent / build workflow docs (repo hygiene)
 
 Fork-only / local-agent notes (not product features for end users):
 
@@ -275,12 +307,13 @@ Fork-only / local-agent notes (not product features for end users):
 
 ---
 
-## 9. File map (quick)
+## 10. File map (quick)
 
 | Area | New / notable paths |
 |------|---------------------|
 | Hints | `WindowHintLabels.swift`, `WindowHintsShortcutStyle.swift`, `WindowHintLabelView.swift`, `TilesView` hint state, `TileView` badge |
 | Snap | `src/switcher/snap/*`, `SnapLayoutsSheet.swift`, `App.enterSnapLayoutMode` / `applySnapLayout` / `handleSnapCancel` |
+| Most Probable | `MostProbableOrder.swift`, `AppTransitionStats.swift`, `WindowOrderResolver` / prefs enum |
 | Shortcuts | `ShortcutAction.swift`, `KeyboardEventsTestable.swift`, Controls / Additional / Shortcuts sheets |
 | Prefs | `Preferences.swift` defaults, `PreferencesMigrations.swift` |
 | Placeholders | `ThumbnailPlaceholder.swift`, `PreviewUnavailableIndicator.swift` |
@@ -289,7 +322,7 @@ Fork-only / local-agent notes (not product features for end users):
 
 ---
 
-## 10. Intentionally unchanged vs upstream
+## 11. Intentionally unchanged vs upstream
 
 Everything else (window tracking, Pro licensing model for Release, Sparkle, appearance themes,
 spaces engine, etc.) tracks upstream 11.9.x. This branch is a **behavior/UX fork** on top of that

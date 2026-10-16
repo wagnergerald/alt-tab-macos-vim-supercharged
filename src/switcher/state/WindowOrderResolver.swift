@@ -2,15 +2,15 @@ import Foundation
 
 /// Decides the display order of windows in the switcher. When a search query is active, ranks by
 /// match-then-relevance; otherwise applies the user's chosen order (recently-focused / recently-created
-/// / alphabetical / by-space), after pushing any "show at the end" buckets (windowless / hidden /
-/// minimized) to the back, with a stable `lastFocusOrder` tiebreak. Pure kernel.
+/// / alphabetical / by-space / most-probable), after pushing any "show at the end" buckets (windowless /
+/// hidden / minimized) to the back, with a stable `lastFocusOrder` tiebreak. Pure kernel.
 ///
 /// `OrderWindow` bundles the canonical `WindowState` + `ApplicationState` for a window with its
-/// **query-derived** search rank (`searchMatches` / `searchRelevance`) — that bundling earns its
-/// keep because `OrderWindow`s are precomputed once per window and read repeatedly during sort.
-/// The other config knobs are plain labeled params with defaults.
+/// **query-derived** search rank (`searchMatches` / `searchRelevance`) and optional
+/// `probableScore` — that bundling earns its keep because `OrderWindow`s are precomputed once per
+/// window and read repeatedly during sort. The other config knobs are plain labeled params with defaults.
 
-enum OrderSortType: Equatable { case recentlyFocused, recentlyCreated, alphabetical, space }
+enum OrderSortType: Equatable { case recentlyFocused, recentlyCreated, alphabetical, space, mostProbable }
 
 /// A window's data + its app's data + its (query-dependent) search rank, for ordering.
 struct OrderWindow: Equatable {
@@ -18,6 +18,17 @@ struct OrderWindow: Equatable {
     let app: ApplicationState
     let searchMatches: Bool       // Search.matches (only meaningful when search is active)
     let searchRelevance: Double   // Search.relevance
+    /// App-affinity score for `.mostProbable` (precomputed once per sort). Unused otherwise.
+    let probableScore: Double
+
+    init(state: WindowState, app: ApplicationState, searchMatches: Bool, searchRelevance: Double,
+         probableScore: Double = 0) {
+        self.state = state
+        self.app = app
+        self.searchMatches = searchMatches
+        self.searchRelevance = searchRelevance
+        self.probableScore = probableScore
+    }
 }
 
 struct ApplicationRepresentativeCandidate: Equatable {
@@ -56,7 +67,8 @@ enum WindowOrderResolver {
                                 windowlessAtEnd: Bool = false,   // showWindowlessApps == .showAtTheEnd
                                 hiddenAtEnd: Bool = false,       // showHiddenWindows == .showAtTheEnd
                                 minimizedAtEnd: Bool = false,    // showMinimizedWindows == .showAtTheEnd
-                                sortType: OrderSortType = .recentlyFocused) -> Bool {
+                                sortType: OrderSortType = .recentlyFocused,
+                                pinCount: Int = MostProbableOrder.defaultPinCount) -> Bool {
         // Buckets apply even while filtering: windowless stay at the end; locked-preview windows
         // are normal windows and keep search / focus order with everyone else.
         if windowlessAtEnd && a.state.isWindowlessApp != b.state.isWindowlessApp { return b.state.isWindowlessApp }
@@ -70,6 +82,9 @@ enum WindowOrderResolver {
         // sort within each bucket
         if sortType == .recentlyFocused { return a.state.lastFocusOrder < b.state.lastFocusOrder }
         if sortType == .recentlyCreated { return b.state.creationOrder < a.state.creationOrder }
+        if sortType == .mostProbable {
+            return compareMostProbable(a, b, pinCount: pinCount)
+        }
         var order = ComparisonResult.orderedSame
         if sortType == .alphabetical {
             order = compareByAppNameThenTitle(a, b)
@@ -104,6 +119,18 @@ enum WindowOrderResolver {
             return a.state.title.localizedStandardCompare(b.state.title)
         }
         return order
+    }
+
+    /// Pins MRU slots `0..<pinCount`, then higher `probableScore`, then `lastFocusOrder`.
+    private static func compareMostProbable(_ a: OrderWindow, _ b: OrderWindow, pinCount: Int) -> Bool {
+        let aPinned = a.state.lastFocusOrder < pinCount
+        let bPinned = b.state.lastFocusOrder < pinCount
+        if aPinned || bPinned {
+            if aPinned != bPinned { return aPinned }
+            return a.state.lastFocusOrder < b.state.lastFocusOrder
+        }
+        if a.probableScore != b.probableScore { return a.probableScore > b.probableScore }
+        return a.state.lastFocusOrder < b.state.lastFocusOrder
     }
 
     private static func intOrder(_ a: Int, _ b: Int) -> ComparisonResult {

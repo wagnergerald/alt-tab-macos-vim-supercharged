@@ -129,6 +129,11 @@
 		5E0DE2A0000000000000D002 /* WindowOrderResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E0DE2A0000000000000D001 /* WindowOrderResolver.swift */; };
 		5E0DE2A0000000000000D003 /* WindowOrderResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E0DE2A0000000000000D001 /* WindowOrderResolver.swift */; };
 		5E0DE2A0000000000000D102 /* WindowOrderResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E0DE2A0000000000000D101 /* WindowOrderResolverTests.swift */; };
+		MPROB01000000000000000002 /* MostProbableOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = MPROB01000000000000000001 /* MostProbableOrder.swift */; };
+		MPROB01000000000000000003 /* MostProbableOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = MPROB01000000000000000001 /* MostProbableOrder.swift */; };
+		MPROB01000000000000000012 /* AppTransitionStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = MPROB01000000000000000011 /* AppTransitionStats.swift */; };
+		MPROB01000000000000000013 /* AppTransitionStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = MPROB01000000000000000011 /* AppTransitionStats.swift */; };
+		MPROB01000000000000000022 /* MostProbableOrderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = MPROB01000000000000000021 /* MostProbableOrderTests.swift */; };
 		5E7AB00000000000000D2002 /* TabGroupResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7AB00000000000000D2001 /* TabGroupResolver.swift */; };
 		5E7AB00000000000000D2003 /* TabGroupResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7AB00000000000000D2001 /* TabGroupResolver.swift */; };
 		5E7AB00000000000000D2102 /* TabGroupResolverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E7AB00000000000000D2101 /* TabGroupResolverTests.swift */; };
@@ -614,6 +619,10 @@
 		5E7C0F70000000000000E101 /* ExceptionMatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExceptionMatcherTests.swift; sourceTree = "<group>"; };
 		5E0DE2A0000000000000D001 /* WindowOrderResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowOrderResolver.swift; sourceTree = "<group>"; };
 		5E0DE2A0000000000000D101 /* WindowOrderResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowOrderResolverTests.swift; sourceTree = "<group>"; };
+		MPROB01000000000000000001 /* MostProbableOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MostProbableOrder.swift; sourceTree = "<group>"; };
+		MPROB01000000000000000011 /* AppTransitionStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTransitionStats.swift; sourceTree = "<group>"; };
+		MPROB01000000000000000021 /* MostProbableOrderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MostProbableOrderTests.swift; sourceTree = "<group>"; };
+		MPROB01000000000000000031 /* MostProbableOrderSpecs.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = MostProbableOrderSpecs.md; sourceTree = "<group>"; };
 		5E7AB00000000000000D2001 /* TabGroupResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabGroupResolver.swift; sourceTree = "<group>"; };
 		5E7AB00000000000000D2101 /* TabGroupResolverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabGroupResolverTests.swift; sourceTree = "<group>"; };
 		5EC0DE00000000000000A101 /* RealWorldScenariosTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RealWorldScenariosTests.swift; sourceTree = "<group>"; };
@@ -1275,6 +1284,9 @@
 				5F117E41000000000000F001 /* PhantomWindowDetector.swift */,
 				5E7C0F70000000000000E001 /* ExceptionMatcher.swift */,
 				5E0DE2A0000000000000D001 /* WindowOrderResolver.swift */,
+				MPROB01000000000000000001 /* MostProbableOrder.swift */,
+				MPROB01000000000000000011 /* AppTransitionStats.swift */,
+				MPROB01000000000000000031 /* MostProbableOrderSpecs.md */,
 				5E7AB00000000000000D2001 /* TabGroupResolver.swift */,
 				5E7AB00000000000000D2101 /* TabGroupResolverTests.swift */,
 				5EC0DE00000000000000A101 /* RealWorldScenariosTests.swift */,
@@ -1294,6 +1306,7 @@
 				5F117E41000000000000F101 /* PhantomWindowDetectorTests.swift */,
 				5E7C0F70000000000000E101 /* ExceptionMatcherTests.swift */,
 				5E0DE2A0000000000000D101 /* WindowOrderResolverTests.swift */,
+				MPROB01000000000000000021 /* MostProbableOrderTests.swift */,
 				5E1EC110000000000000C101 /* SelectionResolverTests.swift */,
 			);
 			path = state;
@@ -2389,6 +2402,9 @@
 				5E7C0F70000000000000E102 /* ExceptionMatcherTests.swift in Sources */,
 				5E0DE2A0000000000000D003 /* WindowOrderResolver.swift in Sources */,
 				5E0DE2A0000000000000D102 /* WindowOrderResolverTests.swift in Sources */,
+				MPROB01000000000000000003 /* MostProbableOrder.swift in Sources */,
+				MPROB01000000000000000013 /* AppTransitionStats.swift in Sources */,
+				MPROB01000000000000000022 /* MostProbableOrderTests.swift in Sources */,
 				5E7AB00000000000000D2003 /* TabGroupResolver.swift in Sources */,
 				5E7AB00000000000000D2102 /* TabGroupResolverTests.swift in Sources */,
 				5EC0DE00000000000000A102 /* RealWorldScenariosTests.swift in Sources */,
@@ -2500,6 +2516,8 @@
 				5F5790DE7EC7000000000B02 /* PreferencesPersistenceCheck.swift in Sources */,
 				5E7C0F70000000000000E002 /* ExceptionMatcher.swift in Sources */,
 				5E0DE2A0000000000000D002 /* WindowOrderResolver.swift in Sources */,
+				MPROB01000000000000000002 /* MostProbableOrder.swift in Sources */,
+				MPROB01000000000000000012 /* AppTransitionStats.swift in Sources */,
 				5E7AB00000000000000D2002 /* TabGroupResolver.swift in Sources */,
 				5EF0C000000000000000F102 /* FocusIntentPolicy.swift in Sources */,
 				5E2A571E000000000000A002 /* WindowState.swift in Sources */,

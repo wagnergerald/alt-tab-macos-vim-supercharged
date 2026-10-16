@@ -685,6 +685,7 @@ class App: AppCenterApplication {
         #endif
         SearchDiscoveryHint.shared.initialize()
         UsageStats.prune()
+        AppTransitionStats.prune()
         ProTransitionManager.shared.onAction = { ProPromptHost.shared.dispatch($0) }
         ProTransitionManager.shared.onAppLaunchComplete()
         #if DEBUG
@@ -808,6 +809,7 @@ extension App: NSApplicationDelegate {
         setNativeCommandTabEnabled(true)
         // usage counters are appended in memory and written back on a debounce; land the pending ones
         UsageStats.flushNow()
+        AppTransitionStats.flushNow()
     }
 
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {

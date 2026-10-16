@@ -20,10 +20,11 @@ Decision order:
    normal bucket.
 2. **Search active** → matched windows first; then higher relevance; then `lastFocusOrder`.
 3. **Sort type** → `recentlyFocused` (lowest `lastFocusOrder`), `recentlyCreated` (highest
-   `creationOrder`), `alphabetical` (app name, then title; `localizedStandardCompare`), or `space`
+   `creationOrder`), `alphabetical` (app name, then title; `localizedStandardCompare`), `space`
    (all-spaces windows first, then lowest space index, then windows with no space index, then
-   alphabetical).
-4. **Tiebreak** → `lastFocusOrder` (for the alphabetical/space paths).
+   alphabetical), or `mostProbable` (MRU pin band, then higher `probableScore`, then
+   `lastFocusOrder`).
+4. **Tiebreak** → `lastFocusOrder` (for the alphabetical/space paths; mostProbable uses it after score).
 
 ## Behavior & edge cases
 
@@ -33,6 +34,10 @@ Decision order:
   tiebreak applies to the alphabetical/space paths.
 - `space`: windows on all spaces sort ahead of space-bound ones; windows with no space index sort after
   indexed ones; ties within a space fall back to alphabetical, then `lastFocusOrder`.
+- `mostProbable`: slots `0..<pinCount` (default 3) stay in MRU order ahead of everyone else; unpinned
+  tiles rank by precomputed app-affinity `probableScore` (see `MostProbableOrder`), then MRU. Score is
+  per-app (`bundleIdentifier`), so Chrome windows with churning titles share one affinity and break
+  ties by MRU.
 - Equal facts → not ordered before each other (strict weak ordering, required by `Array.sort`).
 
 ## One window per app
@@ -82,3 +87,7 @@ Mirrors `WindowOrderResolverTests.swift` 1:1.
 
 ### G. Tiebreak / symmetry
 - **testEqualWindowsAreNotOrderedBeforeEachOther** — equal facts are not ordered before each other.
+
+### H. Most probable
+- **testMostProbablePinsFirstThreeByMru** — pin band beats high score; within pins, MRU wins.
+- **testMostProbableUnpinnedRanksByScoreThenMru** — unpinned by score, then MRU on ties.
